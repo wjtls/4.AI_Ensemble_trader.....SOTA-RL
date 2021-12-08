@@ -1,0 +1,272 @@
+
+class A2C(nn.Module,Env):    #discrete action agent
+#https://arxiv.org/pdf/1607.07086.pdf 논문 참고
+#https://arxiv.org/pdf/1611.01224.pdf 논문 참고
+#Learning to Trade with Deep Actor Critic Methods 논문 참고
+
+    def __init__(self, window,                          #LSTM 윈도우 사이즈
+                       cash,                            #초기 보유현금
+                        cost,                           #수수료 %
+                        minute,                         #데이터 분봉 
+                        device,                         #디바이스 cpu or gpu  
+                        data_count,                      #생성할 데이터갯수
+                        raio,                                 #train set과 val set의 비율
+                        train_val_test,                       # train 인지 validation 인지 test인지
+                        coin_or_stock                        #coin or stock 
+                         ):                       
+        #클래스 상속
+        nn.Module.__init__(self)
+        Env.__init__(self,coin_or_stock)
+        
+        #데이터
+        self.train_data,self.val_data,self.test_data,self.close_=self.input_create(minute, #minute:분봉
+                                                                             ratio,       #ratio는 데이터셋 비율을 리스트로 넣음
+                                                                             data_count) #호출할 데이터수
+                                                                            #인풋 호출
+            
+        
+        self.data_name='stock'   #현 프로젝트 에서는 주식 데이터만 호출한다
+        
+        #train or val or test셋 호출
+        if train_val_test=='train':
+            self.input=self.close_[0]
+            self.scale_input=self.train_data
+        elif train_val_test=='val':
+            self.input=self.close_[1]
+            self.scale_input=self.val_data
+        else:
+            self.input=self.close_[2]
+            self.scale_input=self.test_data
+        self.window=window
+        
+        self.price_data=self.input.to(device)[self.window-1:]   
+        self.scale_price_data=self.scale_input.to(device)[self.window-1:]
+        
+        self.check_point=os.path.join('A2C_weight')  #세이브포인트
+        
+        
+        #데이터 가공
+        self.LSTM_input,self.idx_=self.LSTM_observation(self.scale_input,self.window)           #LSTM에 들어갈형태의 인풋
+        self.LSTM_input_size=self.LSTM_input.size()[2]                             
+                                                                                     
+        #에이전트 변수
+        self.cash=cash  #가진 현금
+        self.cost=cost #수수료 비용
+        self.PV=0    #현 포트폴리오 벨류 저장
+        self.past_PV=self.cash #한스탭이전 포트폴리오 벨류
+        self.stock=0 #가진 주식수
+        self.gamma=0.99
+        self.Cumulative_reward=0 #누적 리워드
+        self.Ensemble_strategy=False #앙상블 진행중일경우 True
+        
+        #action,reward,state저장
+        self.action_data=[]
+        self.reward_data=[]
+        self.step_data=[]
+        
+    def reset(self):
+        self.cash=cash         #가진 현금
+        self.cost=cost         #수수료 퍼센트
+        self.PV=0              #포트폴리오 벨류 저장
+        self.past_PV=self.cash #이전 포트폴리오 벨류 (초기는 현금과같음))
+        self.stock=0           #가진 주식수
+        self.step_data=[]
+        self.gamma=0.99
+        self.Cumulative_reward=0 #누적 리워드
+        
+        self.action_data=[]
+        self.reward_data=[]
+        self.step_data=[]
+        
+                
+        
+    def decide_action(self,policy):    #개별액션 결정함수, 매매할 수량과 액션을 반환
+        policy1=torch.clamp(policy,0,1)
+        action_s=Categorical(policy1)
+        action=action_s.sample()
+       
+        if action==0:  #매도
+            if self.coin_or_stock=='coin':
+                unit0=policy1[0]*self.stock
+                unit=[unit0.item(),0,0]
+            else:
+                unit0=max((policy1[0]*self.stock),0)
+                unit0=round(float(unit0))
+                unit=[unit0,0,0]
+
+        elif action==2:      #매수
+            unit2=(policy1[2]*self.cash)/self.price
+            if self.coin_or_stock=='coin':
+                unit=[0,0,unit2.item()]
+            else:
+                unit2=max(((policy1[2]*self.cash)/self.price),1)
+                unit2=round(float(unit2))
+                if unit2<1: #소수점단위의 주식수는 없으므로
+                    unit2=0
+                unit=[0,0,unit2]
+
+        else: #관망
+            unit=[0,0,0]
+            
+        return action,unit
+    
+
+    def train(self,epoch):
+        #online 학습
+        _actor=A2C_actor(device,self.window)
+        _critic=A2C_critic(device,self.window)
+        
+        target_critic_=[]
+        actor_loss_=[]
+        reward_data=[]        #누적리워드 데이터 저장 (에피소드 끝날때마다)
+        
+        for i in range(epoch):
+            self.reset()
+            loss_data=[]
+            PV_data=[]
+            
+            for step in range(len(self.price_data)-1):  #다음 리워드계산해야 하므로 -1
+                
+                Policy=_actor(self.LSTM_input)
+                value=_critic(self.LSTM_input)
+                
+                policy=F.softmax(Policy)
+                log_prob=F.log_softmax(Policy)
+                
+                self.price=self.price_data[[step]]   #현재 주가업데이트
+                action,unit=self.decide_action(policy[step])
+                action,reward,step=self.discrete_step(action,unit,step,self) #언팩
+                
+                with torch.no_grad():
+                    target_critic= reward+(self.gamma)*_critic(self.LSTM_input)[step+1]   # Jw= Rt+gamma*(Vt+1)-V(t)
+                    td_error= target_critic-_critic(self.LSTM_input)[step]
+                    
+                Advantage = td_error
+                actor_loss= (-(log_prob[step][action]*Advantage)).mean()
+                critic_loss=F.mse_loss(value[step],target_critic)
+                
+                self.Cumulative_reward+=reward
+                loss_data.append(actor_loss+critic_loss)
+                
+                _actor.optimizer.zero_grad()
+                _critic.optimizer.zero_grad()
+                
+                torch.nn.utils.clip_grad_norm_(_actor.parameters(), 0.001)
+                torch.nn.utils.clip_grad_norm_(_critic.parameters(), 0.001)
+                
+                actor_loss.backward(retain_graph=True)
+                critic_loss.backward()
+                
+                _actor.optimizer.step()
+                _critic.optimizer.step()
+            
+            reward_data.append(self.Cumulative_reward)
+            PV_data.append(self.PV)
+            
+            _actor.save()
+            _critic.save()
+            
+            print('학습중',i+1,'/',epoch,'진행','리워드',self.Cumulative_reward,'PV',self.PV)
+            
+        plt.plot(reward_data)
+        plt.title('total 리워드')
+        
+        plt.plot(loss_data)
+        
+        
+    def back_test(self,train_val_test): #백테스팅
+        self.reset() #리셋
+        
+        #train or val or test셋 호출
+        if train_val_test=='train':
+            self.input=self.close_[0]
+            self.scale_input=self.train_data
+        elif train_val_test=='val':
+            self.input=self.close_[1]
+            self.scale_input=self.val_data
+        else:
+            self.input=self.close_[2]
+            self.scale_input=self.test_data
+            
+        self.price_data=self.input.to(device)[self.window-1:]   
+        self.scale_price_data=self.scale_input.to(device)[self.window-1:]
+        
+        #데이터 가공
+        self.LSTM_input,idx_=self.LSTM_observation(self.scale_input,self.window)          #LSTM에 들어갈형태의 인풋
+        self.LSTM_input_size=self.LSTM_input.size()[2]                                
+        
+            
+        #네트워크 호출
+        _actor=A2C_actor(device,self.window) 
+        
+        #저장된 가중치 load
+        _actor.load()
+        
+        #누적 PV데이터
+        PV_data=[]
+        
+        #back testing
+        for step in range(len(self.price_data)-1):
+
+            Policy=_actor(self.LSTM_input)
+            policy=F.softmax(Policy)
+
+            self.price=self.price_data[[step]]   #현재 주가업데이트
+            action,unit=self.decide_action(policy[step]) #action 선택
+            action,reward,step=self.discrete_step(action,unit,step,self) #PV 업데이트
+            
+            #데이터 저장
+            PV_data.append(self.PV)
+            
+            if step%50==0:
+                print(step+1,'/',len(self.price_data),'테스팅중..')
+            
+        #시각화
+        print('A2C Agent 백테스팅 완료')
+        
+        if self.Ensemble_strategy==False: #앙상블중에는 출력하지 않음
+            fig,ax=plt.subplots(2,1,figsize=(10,9))
+            ax[0].set_ylabel('Agent PV')
+            ax[0].plot(PV_data)
+
+            ax[1].set_ylabel('price')
+            ax[1].plot(self.price_data)
+        
+        print((((self.price_data[-1]/self.price_data[0])-1)*100).item(),':beta value')
+        print(float(((PV_data[-1]/PV_data[0])-1)*100),':Agent return')
+        
+        return PV_data    
+    
+    
+    def Ensemble_step(self,data,close_data,cash,stock,PV,step): #앙상블 스탭
+        self.reset() #리셋
+        
+        #앙상블 에이전트의 PortFolio 업데이트
+        self.cash=cash
+        self.stock=stock
+        self.PV=PV
+        
+        self.scale_input=data
+        self.input=close_data
+        
+        self.price_data=self.input.to(device)[self.window-1:]   
+        self.scale_price_data=self.scale_input.to(device)[self.window-1:]
+        
+        #데이터 가공
+        self.LSTM_input,self.idx_=self.LSTM_observation(self.scale_input,self.window)           #LSTM에 들어갈형태의 인풋
+        self.LSTM_input_size=self.LSTM_input.size()[2]                                #LSTM인풋디멘션( LSTM의 인풋형태: 윈도우사이즈,총시퀀스길이,디멘션)
+                                                                                      #batch first 인경우= (배치길이(총길이), 디멘션, 시퀀스길이(윈도우사이즈))
+        
+        actor=A2C_actor(device,self.window) #network load
+        actor.load()
+        
+        Policy=actor(self.LSTM_input)  #policy
+        policy=F.softmax(Policy)
+        
+        self.price=close_data[[step]]   #현재 주가업데이트
+        action,unit=self.decide_action(policy[step]) #action 선택
+        action,reward,step=self.discrete_step(action,unit,step,self) #PV 업데이트
+        
+        return self.cash,self.stock,self.PV
+        
+            
