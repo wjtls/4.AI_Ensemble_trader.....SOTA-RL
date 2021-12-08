@@ -1,0 +1,11 @@
+
+period=30 #샤프지수계산 rolling size 
+data_name='val' #각에이전트 벡테스팅할 데이터셋
+
+agent1=A2C( window, cash, cost, minute, device,data_count,ratio,'val',coin_or_stock)
+agent2=PPO(window, cash,cost,minute,device,k_epoch,data_count,ratio,'val',coin_or_stock)
+agent3=DDPG(window, cash, cost, minute, device,batch_size,data_count,ratio,'val',coin_or_stock,dim)
+
+En_RL=Ensemble(coin_or_stock)
+
+ES_PV=En_RL.back_test(agent1,agent2,agent3,period,data_name,ratio)
