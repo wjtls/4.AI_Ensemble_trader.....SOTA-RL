@@ -1,0 +1,420 @@
+#RDPG= RNN + DDPG 
+class DDPG(nn.Module,Env): #continuous action space agent
+     
+    def __init__(self, window,                          #LSTM 윈도우 사이즈
+                       cash,                            #초기 보유현금
+                        cost,                           #수수료 %
+                        minute,                         #데이터 분봉 
+                        device,                         #디바이스 cpu or gpu
+                    batch_size,                        #버퍼 사이즈
+                    data_count,                          #생성할 데이터 갯수
+                    raio,                                 #train set과 val set의 비율
+                    train_val_test,                       # train 인지 validation 인지 test인지
+                    coin_or_stock,                        #coin or stock 
+                    dim                                   #feature dimention
+                ):                       
+        #클래스 상속
+        nn.Module.__init__(self)
+        Env.__init__(self,coin_or_stock)
+        
+        #데이터
+        self.train_data,self.val_data,self.test_data,self.close_=self.input_create(minute, #minute:분봉
+                                                                             ratio,       #ratio는 데이터셋 비율을 리스트로 넣음
+                                                                             data_count) #호출할 데이터수
+                                                                            #인풋 호출
+        self.data_name='coin'   #현 프로젝트 에서는 코인 데이터만 호출한다
+        
+        #train or val or test셋 호출
+        if train_val_test=='train':
+            self.input=self.close_[0]
+            self.scale_input=self.train_data
+        elif train_val_test=='val':
+            self.input=self.close_[1]
+            self.scale_input=self.val_data
+        else:
+            self.input=self.close_[2]
+            self.scale_input=self.test_data
+        
+        self.window=window
+        self.price_data=self.input.to(device)[self.window-1:]   
+        self.scale_price_data=self.scale_input.to(device)[self.window-1:]
+        
+        self.check_point=os.path.join('DDPG_weight')  #세이브포인트
+        
+        self.window=window
+        #데이터 가공
+        self.LSTM_input,idx_=self.LSTM_observation(self.scale_input,self.window)          #LSTM에 들어갈형태의 인풋
+        self.LSTM_input_size=self.LSTM_input.size()[2]                                #LSTM인풋디멘션( LSTM의 인풋형태: 윈도우사이즈,총시퀀스길이,디멘션)
+        
+        #에이전트 파라미터
+        self.cash=cash                        #가진 현금
+        self.cost=cost                        #수수료 비용
+        self.PV=0                             #현 포트폴리오 벨류 저장
+        self.past_PV=self.cash                #한스탭이전 포트폴리오 벨류 (초기는 현금)
+        self.stock=0                          #가진 주식수
+        self.gamma=0.99
+        self.Cumulative_reward=0              #누적 리워드
+        self.batch_size=batch_size
+        self.device=device
+        self.dim=dim
+        self.Ensemble_strategy=False #앙상블 진행중일경우 True
+        
+        self.theta=1e-1                        #평균회귀속도
+        self.dt=5e-3                        #시간t의 변화량
+        self.sigma=1                        #OU의 변동성(노이즈가 얼마나 크게변동하면서 평균으로 회귀할지)
+        self.X=torch.zeros(1).to(self.device) #들어온숫자 모두0으로 출력
+        self.tau=1e-2                      #for target soft update
+        
+        #데이터 저장
+        self.action_data=[]   #action
+        self.reward_data=[]   #reward
+        self.state_data=[]    #state
+        self.step_data=[]     #step
+        self.next_state_data=[] #next state s' (critic 네트워크 인풋)
+        self.mu_next_state=[]   #next state s' (mu네트워크 인풋)
+        self.next_step_idx=[]   #next state index
+        
+        self.unit=0           #매매할 주식수 리스트형태 저장
+        self.continuous_action=0 #매매할 주식수
+        self.buffer=[]   #리플레이 버퍼의 총스탭저장
+        
+        self.out=[]   #크리틱 value 값을 확인
+        self.out2=[]
+        self.target_out=[]
+        self.target_out2=[]
+        
+        
+    def reset(self):
+        self.cash=cash           #가진 현금
+        self.cost=cost           #수수료 퍼센트
+        self.PV=0                #포트폴리오 벨류 저장
+        self.past_PV=self.cash   #이전 포트폴리오 벨류 (초기는 현금과같음))
+        self.stock=0             #가진 주식수
+        self.step_data=[]
+        self.gamma=0.99
+        self.Cumulative_reward=0 #누적 리워드
+        #OU 프로세스의 파라미터들(텐서플로와 유니티로 배우는 강화학습 책 참고)
+        
+        self.theta=1e-1   #평균회귀속도
+        self.dt=5e-3    #시간t의 변화량
+        self.sigma=1   #OU의 변동성(노이즈가 얼마나 크게변동하면서 평균으로 회귀할지)
+        self.X=torch.zeros(1).to(self.device) #X= 0
+        self.tau=1e-2                        #for target soft update
+        
+        #데이터 초기화 
+        self.action_data=[]
+        self.reward_data=[]
+        self.state_data=[]
+        self.step_data=[]
+        self.next_state_data=[]
+        self.mu_next_state=[]
+        self.next_step_idx=[]
+        self.out=[]  #크리틱 데이터
+        
+        self.out2=[]
+        self.target_out=[]
+        self.target_out2=[]
+    
+        
+    def OU_process(self,noise_mu):
+        normal= torch.Tensor(np.random.normal(size=1)).to(self.device)
+        dx=(self.theta*(noise_mu-self.X)*self.dt)+(self.sigma*np.sqrt(self.dt)*normal)
+        
+        self.X=dx
+        
+        return self.X
+        
+        
+    def decide_action(self,mu):    #ddpg액션 결정함수,continuous action space에서 가능하므로 매수매도관망이 아닌 주식수
+        noise_mu= torch.zeros(1).to(self.device)
+        N=self.OU_process(noise_mu)
+    
+        mu_action= mu + N    #mu는 -1 ~ 1사이값
+        mu_action_clip=torch.clip(mu_action,-1,1)
+        unit0=0
+        unit1=0
+        unit2=0
+        if mu_action>0: #매수
+            buy_cash=(self.cash*abs(mu_action_clip.item()))   #살수있는 돈
+            if self.coin_or_stock=='coin': #코인데이터 일경우
+                unit2=buy_cash/self.price
+            else: #주식데이터 일경우
+                self.price=float(self.price)
+                unit2,_=divmod(buy_cash,self.price)  #살수있는 유닛수
+                
+            continuous_action=unit2
+            
+        elif mu_action==0: #관망
+            unit1=0
+            continuous_action=0
+            
+        else:    #매도
+            sell_stock=round(self.stock*mu_action_clip.item())
+            unit0=abs(sell_stock)                                    #팔 주식수(음수로 나오기때문에 절댓값)
+            continuous_action=unit0
+                
+        self.unit=[unit0,unit1,unit2]
+        self.continuous_action=torch.tensor(continuous_action)
+        
+        return mu_action_clip,self.unit
+    
+    
+           
+    def buffer_step(self):  # 에피소드동안 돌아야할 총 스텝을 구함
+        total_step= self.scale_price_data
+        
+        buffer_step_data=[]
+        buffer_step_idx=[]
+        idx=0
+        
+        while True:
+            buffer_step_idx.append(range(idx,idx+self.batch_size))  #인덱스 저장
+            
+            past_idx=idx
+            idx+=self.batch_size
+            
+            if idx+self.batch_size>=len(total_step)-1:
+                break
+        
+        self.buffer=buffer_step_idx
+        if len(self.buffer[-1])!=self.batch_size: # 좀더 작은 사이즈의 미니배치에 대해서 편향이 생겨 오버핏될 가능성이 있으므로 사이즈 안맞으면 제거
+            del self.buffer[-1]
+        
+        return self.buffer
+    
+        
+        
+    def optimize(self,mu_net,value_net,target_mu,target_value,sample_step): #최적화
+        
+        mu_next_state,next_state,step_data,state_LSTM,action_data,reward_data=self.data_pre(sample_step)
+        with torch.no_grad():
+            value_net_=value_net
+            #mu(s_prime) 계산
+            target_mu_=target_mu(mu_next_state)
+
+            #Q(s_prime,mu(s_prime))
+            target= target_value(next_state,target_mu_)
+            target_critic= reward_data+self.gamma*target
+            
+        #actor loss 계산
+        noise_mu=torch.zeros(1).to(self.device)
+        Noise=self.OU_process(noise_mu)
+        
+        #네트워크
+        mu = mu_net(state_LSTM)
+        critic= value_net(step_data,action_data)    #critic
+        self.out.append(critic)
+        self.target_out.append(target)
+        self.target_out2.append(target_mu_)
+        
+        #로스정의
+            
+        critic_loss= F.mse_loss(critic,target_critic.detach())  #critic loss 계산
+        mu_loss=-value_net_(step_data,mu)
+        mu_loss=mu_loss.mean()
+        
+        #옵티마이즈
+        mu_net.zero_grad()
+        torch.nn.utils.clip_grad_norm_(mu_net.parameters(), 0.01)
+        mu_loss.backward()
+        mu_net.optimizer.step()
+        
+        value_net.zero_grad()
+        torch.nn.utils.clip_grad_norm_(value_net.parameters(), 0.01)
+        critic_loss.backward()
+        value_net.optimizer.step()
+        
+        
+        
+        #타겟 소프트 업데이트
+        self.target_soft_update(value_net,target_value)
+        self.target_soft_update(mu_net,target_mu)
+        
+        
+    def target_soft_update(self,net,target_net): #타겟 소트프 업데이트 
+        for target_,net_ in zip(target_net.parameters(),net.parameters()):
+        
+            target_.data.copy_(target_.data*(1-self.tau)+net_.data*self.tau)
+        #tau세타Q<<tau*세타Q+(1-tau)*세타Q
+        
+    
+    def data_pre(self,step):  #optimize전- 데이터 전처리
+        
+        
+        self.mu_next_state=self.LSTM_input[self.next_step_idx] 
+        mu_next_state=self.mu_next_state[step]# mu_network(bi-LSTM) 인풋데이터  next state s'
+        
+        next_state=torch.Tensor(np.array(self.next_state_data)).view(-1,1).to(self.device)#(batch_size,dim)          # value net 인풋데이터 next state s'
+        next_state=next_state[step]
+        
+        state_data= torch.Tensor(np.array(self.state_data)).view(-1,1).to(self.device)  # state s #(batch_size,dim) 
+        state_data=state_data[step]
+        
+        state_LSTM=self.LSTM_input[self.step_data]
+        state_LSTM=state_LSTM[step]
+        
+        action_data=torch.Tensor(self.action_data).view(-1,1).to(self.device)# mu a #(batch_size,dim) 
+        action_data=action_data[step]
+        
+        reward_data=torch.Tensor(np.array(self.reward_data)).view(-1,1).to(device)  # reward R #(batch_size,dim)
+        reward_data=reward_data[step]
+        
+        return mu_next_state,next_state,state_data,state_LSTM,action_data,reward_data
+        
+        
+    def update_data(self,action,state,reward,next_step_idx,step): #배치에 데이터 업데이트
+        self.action_data.append(action)
+        self.reward_data.append(reward)
+        self.state_data.append(state)
+        self.next_state_data.append(self.scale_price_data[next_step_idx])
+        self.next_step_idx.append(next_step_idx)
+        self.step_data.append(step)
+        
+    def minibatch_reset(self):#배치 리셋 
+        self.action_data=[]
+        self.reward_data=[]
+        self.step_data=[]
+        self.state_data=[]
+        self.next_step_idx=[]
+        self.next_state_data=[]
+        
+     
+    def train(self,epoch):
+        
+        mu_net=DDPG_actor(self.device,self.window) 
+        value_net=DDPG_critic(self.device,self.dim,self.window)
+        
+        target_mu= DDPG_actor(self.device,self.window)
+        target_value= DDPG_critic(self.device,self.dim,self.window)
+
+        self.buffer=self.buffer_step()       #총스탭을 구함(남은 미니배치는 삭제)
+        data_last_idx=len(np.array(self.buffer).reshape(-1)) #self.buffer는 남은 미니배치 삭제하므로 데이터 길이 일치시킴
+        self.LSTM_input=self.LSTM_input[:data_last_idx+1]    #next_step 계산때문에 +1
+        
+        for step_ in range(epoch):
+            self.reset() 
+            noise_mu=np.zeros(1)  #Initialize a random process N
+            
+            #에피소드 데이터 저장
+            for step_data in self.buffer: #self. buffer는 미니배치들과 index를 반환
+                
+                self.minibatch_reset()
+                for step in step_data:
+                    #에피소드 돈다 step_idx=배치내 스테이트 인덱스 ,step= 스테이트
+                    self.price=self.price_data[step].item()
+                    with torch.no_grad():
+                        mu = mu_net(self.LSTM_input[step:step+1])
+                    self.out2.append(mu)
+                    action,unit=self.decide_action(mu) #continuous action space 에서 action은 갯수(action,unit,noise_mu 반환)
+                    action_,reward,step,next_step_idx=self.continuous_step(action,unit,step,self)
+                    
+                    state= self.scale_price_data[step]              #현재가격 업데이트 (스케일링된)
+                    self.Cumulative_reward+=reward                  #누적 리워드 업데이트
+                    self.update_data(action,state,reward,next_step_idx,step) #에피소드 트레젝터리 저장
+                    
+                sample_step=np.random.choice(len(step_data),self.batch_size)    #랜덤 샘플링
+                self.optimize(mu_net,value_net,target_mu,target_value,sample_step)   #옵티마이즈
+                
+                mu_net.save()   #weight 저장
+                target_mu.save()
+                value_net.save()
+                target_value.save()
+                
+            print(step_+1 ,'/' ,epoch,':에포크',self.PV,':마지막 PV',self.cash,':현금',self.stock,':주식(코인)수', self.Cumulative_reward.item(),'rewaRd')
+        
+            
+    def back_test(self,train_val_test): #백테스팅
+        self.reset() #리셋
+        
+        #train or val or test셋 호출
+        if train_val_test=='train':
+            self.input=self.close_[0]
+            self.scale_input=self.train_data
+            
+        elif train_val_test=='val':
+            self.input=self.close_[1]
+            self.scale_input=self.val_data
+            
+        else:
+            self.input=self.close_[2]
+            self.scale_input=self.test_data
+            
+        self.price_data=self.input.to(device)[self.window-1:]   
+        self.scale_price_data=self.scale_input.to(device)[self.window-1:]
+        
+        #데이터 가공
+        self.LSTM_input,idx_=self.LSTM_observation(self.scale_input,self.window)          #LSTM에 들어갈형태의 인풋
+        self.LSTM_input_size=self.LSTM_input.size()[2]                                #LSTM인풋디멘션( LSTM의 인풋형태: 윈도우사이즈,총시퀀스길이,디멘션)
+        
+        #네트워크 호출
+        mu_net=DDPG_actor(self.device,self.window) 
+        value_net=DDPG_critic(self.device,self.dim,self.window)
+        
+        #저장된 가중치 load
+        mu_net.load()
+        value_net.load()
+        
+        #누적 PV데이터
+        PV_data=[]
+        
+        #back testing
+        for step in range(len(self.price_data)-1):
+            
+            self.price=self.price_data[step].item()            #현재가 업데이트
+            with torch.no_grad():
+                mu=mu_net(self.LSTM_input[step:step+1])
+            self.sigma=0 #noise = 0 
+            self.theta=0 
+            action,unit=self.decide_action(mu) #현 스테이트에서 액션 선택
+            action_,reward,step,next_step_idx=self.continuous_step(action,unit,step,self) #액션 및 PV업데이트
+            
+            #데이터 저장
+            PV_data.append(self.PV)
+            if step%50==0:
+                print(step+1,'/',len(self.price_data),'테스팅중..')
+            
+        #시각화
+        print('DDPG Agent 백테스팅 완료')
+        
+        if self.Ensemble_strategy==False: #앙상블중에는 출력하지 않음
+            fig,ax=plt.subplots(2,1,figsize=(10,9))
+            ax[0].set_ylabel('Agent PV')
+            ax[0].plot(PV_data)
+
+            ax[1].set_ylabel('price')
+            ax[1].plot(self.price_data)
+        
+        print((((self.price_data[-1]/self.price_data[0])-1)*100).item(),':beta value')
+        print(float(((PV_data[-1]/PV_data[0])-1)*100),':Agent return')
+        
+        return PV_data
+    
+    def Ensemble_step(self,data,close_data,cash,stock,PV,step): #앙상블 스탭
+        self.reset() #리셋
+        
+        #앙상블 에이전트의 PortFolio 업데이트
+        self.cash=cash
+        self.stock=stock
+        self.PV=PV
+        
+        self.scale_input=data
+        self.input=close_data
+            
+        #데이터 가공
+        self.LSTM_input,idx_=self.LSTM_observation(self.scale_input,self.window)          #LSTM에 들어갈형태의 인풋
+        self.LSTM_input_size=self.LSTM_input.size()[2]                                
+        
+        #네트워크 호출
+        mu_net=DDPG_actor(self.device,self.window) 
+        value_net=DDPG_critic(self.device,self.dim,self.window)
+        
+        #저장된 가중치 load
+        mu_net.load()
+        value_net.load()
+        
+        mu=mu_net(self.LSTM_input[step:step+1])
+        action,unit=self.decide_action(mu) #현 스테이트에서 액션 선택
+        self.price=close_data[step].item()            #현재가 업데이트
+        action_,reward,step,next_step_idx=self.continuous_step(action,unit,step,self) #액션 및 PV업데이트
+        
+        return self.cash,self.stock,self.PV
