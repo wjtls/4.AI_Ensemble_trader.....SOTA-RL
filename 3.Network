@@ -1,0 +1,205 @@
+#Network classes
+
+class A2C_actor(nn.Module):
+   
+    def __init__(self,device,window):
+        nn.Module.__init__(self)
+        
+        self.hidden_size=32
+        self.num_layers=2
+        self.check_point=os.path.join('A2C_actor_weight')  #세이브포인트
+        
+        self.LSTM=nn.LSTM(input_size=window,hidden_size=self.hidden_size, num_layers=self.num_layers, batch_first=True, bidirectional=True)
+        self.Linear= nn.Sequential(nn.Linear(self.hidden_size*2,32),
+                                  nn.ReLU(),
+                                   nn.Linear(32,3)
+                                  )
+                                   
+        self.optimizer=optim.Adam(self.parameters(),lr=2e-4,eps=1e-10)
+        self.to(device)
+        
+                                   
+    def forward(self,_input):
+        p,_=self.LSTM(_input)
+        p=self.Linear(p[:,-1,:])
+        return p 
+    
+    def load(self):    #가중치 불러오기
+        self.load_state_dict(torch.load(self.check_point))
+                            
+    def save(self):    #가중치 저장
+        torch.save(self.state_dict(),self.check_point)
+        
+        
+                                   
+                                   
+class A2C_critic(nn.Module):
+    def __init__(self,device,window):             
+        nn.Module.__init__(self)
+        
+        self.hidden_size=32
+        self.num_layers=2
+        
+        self.LSTM=nn.LSTM(input_size=window,hidden_size=self.hidden_size, num_layers=self.num_layers,batch_first=True, bidirectional=True)
+        self.Linear= nn.Sequential(nn.Linear(self.hidden_size*2,32),
+                                  nn.ReLU(),
+                                   nn.Linear(32,1)
+                                  )
+                                   
+        self.optimizer=optim.Adam(self.parameters(),lr=2e-4,eps=1e-10)
+        self.to(device)
+        
+        self.check_point=os.path.join('A2C_critic_weight')  #세이브포인트
+        
+                                   
+    def forward(self,_input):
+        p,_=self.LSTM(_input)
+        v=self.Linear(p[:,-1,:])
+        return v
+    
+    def load(self):    #가중치 불러오기
+        self.load_state_dict(torch.load(self.check_point))
+                            
+    def save(self):    #가중치 저장
+        torch.save(self.state_dict(),self.check_point)
+        
+        
+        
+#-------------------------------------------------------------------------------------------------------------------------------------        
+    
+    
+    
+class PPO_critic(nn.Module):
+    def __init__(self,device,window):
+        nn.Module.__init__(self)
+        
+        self.hidden_size=32
+        self.num_layers=1
+        
+        self.LSTM=nn.LSTM(input_size=window,hidden_size=self.hidden_size,num_layers=self.num_layers,batch_first=True,bidirectional=True)
+        self.Linear=nn.Sequential(nn.Linear(self.hidden_size*2,32),
+                                  nn.ReLU(),
+                                 nn.Linear(32,1))
+        
+        self.optimizer= optim.Adam(self.parameters(),lr=3e-3,eps=1e-10)
+        self.check_point= os.path.join('PPO_critic_weight')
+        self.to(device)
+    
+        
+    def forward(self,input_):
+        p,_=self.LSTM(input_)
+        v=self.Linear(p[:,-1,:])
+        return v
+    
+    def load(self):
+        self.load_state_dict(torch.load(self.check_point))
+        
+    def save(self):
+        torch.save(self.state_dict(),self.check_point)
+        
+        
+class PPO_actor(nn.Module):
+    def __init__(self,device,window):
+        nn.Module.__init__(self)
+        
+        self.hidden_size=32
+        self.num_layers=1
+        
+        self.LSTM=nn.LSTM(input_size=window,hidden_size=self.hidden_size,num_layers=self.num_layers,batch_first=True,bidirectional=True)
+        self.Linear=nn.Sequential(nn.Linear(self.hidden_size*2,32),
+                                  nn.ReLU(),
+                                 nn.Linear(32,3))
+        
+        self.optimizer= optim.Adam(self.parameters(),lr=3e-3,eps=1e-10)
+        self.check_point= os.path.join('PPO_actor_weight')
+        self.to(device)
+    
+    def forward(self,input_):
+        p,_=self.LSTM(input_)
+        v=self.Linear(p[:,-1,:])
+        return v
+    
+    def load(self):
+        self.load_state_dict(torch.load(self.check_point))
+    
+    def save(self):
+        torch.save(self.state_dict(),self.check_point)
+        
+#-------------------------------------------------------------------------------------------------------------------------------------
+
+class DDPG_actor(nn.Module):    #mu net
+    def __init__(self,device,window):
+        super(DDPG_actor,self).__init__()
+        self.hidden_size=32
+        self.num_layers=1
+        
+        self.LSTM=nn.LSTM(input_size=window,hidden_size=self.hidden_size, num_layers=self.num_layers, batch_first=True, bidirectional=True)
+        
+        self.fc1=nn.Linear(self.hidden_size*2,self.hidden_size)
+        self.actor=nn.Linear(self.hidden_size,1)
+        
+        self.optimizer= optim.Adam(self.parameters(),lr=5e-6,eps=1e-10)
+        self.check_point= os.path.join('DDPG_actor_weight')
+        self.device=device
+        self.to(device)
+    
+    def forward(self,input_data):  # mu(s)
+        input_data=torch.Tensor(input_data).to(device)
+        result,_=self.LSTM(input_data)
+        result=F.relu(self.fc1(result[:,-1,:]))
+        mu= torch.tanh(self.actor(result))
+        return mu
+         
+    def load(self):
+        self.load_state_dict(torch.load(self.check_point))
+        
+    def save(self):
+        torch.save(self.state_dict(),self.check_point)
+        
+        
+       
+        
+class DDPG_critic(nn.Module):
+    
+    def __init__(self,device,dim,window):   #device,feature dimention, buffer size, window
+        super(DDPG_critic,self).__init__()
+        self.dim=dim
+        self.state_dim=1
+        self.action_dim=1
+        
+        self.action=nn.Linear(self.action_dim,50)
+        self.state=nn.Linear(self.state_dim,50)
+        self.fc1=nn.Linear(100,200)
+        self.fc2=nn.Linear(200,50)
+        self.critic=nn.Linear(50,1)
+        
+        
+        self.batch=nn.BatchNorm1d(1)
+        
+        self.optimizer= optim.Adam(self.parameters(),lr=1e-5,eps=1e-10)
+        self.check_point= os.path.join('DDPG_critic_weight')
+        self.device=device
+        self.to(device)
+        
+    
+    def forward(self,price_data,action_data_):
+        state=self.state(price_data)
+        action=self.action(action_data_)
+        
+        sa=torch.cat([state,action],axis=1)  #(batch_size,dim) 
+        
+        critic=F.relu(self.fc1(sa))
+        critic=F.relu(self.fc2(critic))
+        critic=self.critic(critic)
+        
+        return critic
+    
+    
+    def load(self):
+        self.load_state_dict(torch.load(self.check_point))
+        
+        
+    def save(self):
+        torch.save(self.state_dict(),self.check_point)
+     
+    
