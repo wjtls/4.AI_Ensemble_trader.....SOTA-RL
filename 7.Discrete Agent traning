@@ -1,0 +1,34 @@
+
+np.random.seed(1)
+
+
+
+
+
+
+#ppo 학습
+ppo=PPO(window, cash,cost,minute,device,k_epoch,data_count,ratio,'train',coin_or_stock)
+ppo.train(6000)
+
+#rdpg 학습
+rdpg=DDPG(window, cash, cost, minute, device, batch_size, data_count, ratio, 'train', coin_or_stock, dim)
+rdpg.train(6000)
+
+#a2c 학습
+a2c=A2C( window, cash, cost,minute,device,data_count,ratio,'train',coin_or_stock)
+a2c.train(4000)
+
+
+
+#PPO 백테스팅 
+ppo=PPO(window, cash,cost,minute,device,k_epoch,data_count,ratio,'train',coin_or_stock)
+PPO_PV_data=ppo.back_test('val')
+
+#RDPG 백테스팅
+rdpg=DDPG(ddpg_window, cash, cost, minute, device, batch_size, data_count, ratio, 'train', coin_or_stock, dim)
+RDPG_PV_data=rdpg.back_test('val')
+
+#A2C 백테스팅
+a2c=A2C( window, cash, cost,minute,device,data_count,ratio,'train',coin_or_stock)
+A2C_PV_data=a2c.bach_test('val')
+
