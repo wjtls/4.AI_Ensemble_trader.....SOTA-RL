@@ -1,0 +1,32 @@
+#torch 
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import torch.nn.functional as F
+
+
+#정규화 및 계산
+from torch.distributions import Normal
+from torch.distributions import Categorical
+from torch.autograd import Variable
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
+
+
+#시각화및 저장,계산
+import matplotlib.pyplot as plt
+import os
+import numpy as np
+import pandas as pd
+
+
+#API및 데이터 불러오기
+import pyupbit as py
+import csv
+
+
+#기타
+import datetime
+import time
+import copy
+from shholiday import holiday2020 as hd
+from datetime import  datetime
