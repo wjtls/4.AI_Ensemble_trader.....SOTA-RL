@@ -1,0 +1,208 @@
+
+
+class Ensemble(Env):
+    #학습 끝낸후 앙상블
+    #sharp ratio = (RP - RF)/Qp
+    '''''
+    In this paper we retrain our three agents at every three months.
+    using a 3-month validation rolling window after training window to pick the best performing 
+    agent with the highest Sharpe ratio
+    
+     rolling window=30으로 설정.
+     시퀀스마다 sharpe ratio 를 계산하고 높은 sharpe ratio 모델 선정
+    '''''
+    def __init__(self,coin_or_stock):
+        Env.__init__(self,coin_or_stock)
+        
+        #데이터
+        self.idx=0 #index
+        self.agent1_SR=[] #에이전트의 sharpe ratio data
+        self.agent2_SR=[]
+        self.agent3_SR=[]
+        
+        #파라미터
+        self.cash_=cash 
+        
+        self.is_Agent_Exist=[1,1,1]#앙상블 에이전트가 오류없이 백테스팅이 가능한지 여부
+        self.Agent_cash=self.cash_ #앙상블 에이전트의 현금
+        self.Agent_stock=0         #앙상블 에이전트의 주식수
+        self.Agent_PV=0            #앙상블 에이전트의 PV
+        self.Agent_price=0         #price
+        
+    def total_reset(self):
+        self.idx=0 #index
+        self.agent1_SR=[] #에이전트의 sharpe ratio data
+        self.agent2_SR=[]
+        self.agent3_SR=[]
+        
+        self.is_Agent_Exist=[1,1,1]
+        self.Agent_cash=self.cash_
+        self.Agent_stock=0
+        self.Agent_PV=0
+        self.Agent_price=0
+        
+        
+    def QP(self,agent_PV):    #portfolio standard deviation 표준편차(해당 에이전트 변동성)
+        qp=np.array(agent_PV)
+        qp=np.std(qp)
+        return qp
+    
+    
+    def RF(self,price_data):  #risk free rate 안정수익(기존 인덱스 수익)
+        rf=(((price_data[-1]/price_data[0])-1)*100)
+        return rf
+    
+    
+    def RP(self,agent_PV): #expected portfolio return 포트폴리오 기대 수익
+        rp=(((agent_PV[-1]/agent_PV[0])-1)*100)
+        return rp
+    
+    
+    def sharpe_ratio(self,agent_PV,price_data): #sharpe_ratio
+        rp=self.RP(agent_PV)
+        qp=self.QP(agent_PV)
+        rf=self.RF(price_data)
+        
+        SR=(rp-rf)/qp
+        return SR
+    
+    
+    def Agents_back_test(self,agent1,agent2,agent3,data_name): #각 에이전트 백테스팅
+        agent1.Ensemble_strategy=True
+        agent2.Ensemble_strategy=True
+        agent3.Ensemble_strategy=True
+        
+        try:
+            process1=agent1.back_test(data_name)
+        except:
+            process1=np.zeros(len(agent1.price_data))
+            self.is_Agent_Exist[0]=0
+            print('Agent{}'.format(agent1),'백테스팅 오류 re- traning 요구됨')
+        print('======================================================================')
+        
+        try:
+            process2=agent2.back_test(data_name)
+        except:
+            process2=np.zeros(len(agent2.price_data))
+            self.is_Agent_Exist[1]=0
+            print('Agent{}'.format(agent2),'백테스팅 오류 re- traning 요구됨')
+            
+        print('======================================================================')
+            
+        try:
+            process3=agent3.back_test(data_name)
+        except:
+            process3=np.zeros(len(agent3.price_data))
+            self.is_Agent_Exist[2]=0
+            print('Agent{}'.format(agent3),'백테스팅 오류 re- traning 요구됨')
+        
+        print('======================================================================')
+        
+        return process1,process2,process3
+        
+    
+    
+    def cul_SR(self,agent,agent2,agent3,period,PV):   #각 에이전트 샤프지수 계산
+        idx=0
+        for t in range(len(agent.price_data)-period):
+            SR1=self.sharpe_ratio(PV[0][idx:idx+period],agent.price_data[idx:idx+period])
+            SR2=self.sharpe_ratio(PV[1][idx:idx+period],agent.price_data[idx:idx+period])
+            SR3=self.sharpe_ratio(PV[2][idx:idx+period],agent.price_data[idx:idx+period])
+
+            self.agent1_SR.append(SR1)
+            self.agent2_SR.append(SR2)
+            self.agent3_SR.append(SR3)
+            idx+=1
+            
+    
+    def max_sharpe(self,agent,agent2,agent3,idx_): #가장큰 샤프지수 가진 에이전트의 인덱스
+        
+        SP_data=[self.agent1_SR[idx_],self.agent2_SR[idx_],self.agent3_SR[idx_]]  #가장큰 샤프지수 선정
+        Exist_num=self.is_Agent_Exist.count(0) #오류생긴 에이전트가 여러개인지 확인
+        
+        if Exist_num==1:
+            Exist_idx=self.is_Agent_Exist.index(0) #에이전트를 골라냄
+            SP_data[Exist_idx]=-5000000
+            
+        elif Exist_num>1:
+            print('에이전트 2개이상 오류')
+        
+        else:
+            pass
+        
+        max_idx=np.argmax(SP_data)                      #큰 샤프지수의 인덱스
+        
+        if max_idx==0:
+            Agent=agent
+        elif max_idx==1:
+            Agent=agent2
+        elif max_idx==2:
+            Agent=agent3
+        else:
+            print('max sharpe ratio 에이전트 설정 오류')
+        return Agent
+    
+    
+    def Agent_update(self,Agent,cash,stock,PV,price): #각 에이전트 상태 업데이트
+        Agent.cash=float(cash)
+        Agent.stock=float(stock)
+        Agent.PV=float(PV)
+        Agent.price=float(price)
+        
+        
+        
+    def back_test(self,agent1,agent2,agent3,period,data_name,ratio): #에이전트 백테스팅 (에이전트, 기간) , period=샤프지수 rolling window size
+        '''''
+        period 만큼 rolling을 하여 sharpe ratio 연산
+        매스탭 val data back testing 결과 기반 에이전트 선정하여 test셋 백테스팅
+        
+        '''''
+        
+        self.total_reset()
+        PV1,PV2,PV3=self.Agents_back_test(agent1,agent2,agent3,data_name) #각 에이전트 백테스팅
+        PV=[PV1,PV2,PV3]                                                 #에이전트의 PV데이터
+        self.cul_SR(agent1,agent2,agent3,period,PV)           #각 에이전트 샤프지수 계산
+        
+        
+        ##데이터 호출
+        train_data,val_data,test_data,ori_close=self.input_create('day', #minute:분봉(코인)
+                                                 ratio,   #ratio는 데이터셋 비율을 리스트로 넣음
+                                                500) #호출할 데이터수(코인)
+                                                     
+        price_data=ori_close[1][period:] #val set 호출  #샤프지수데이터 rolling 했기때문에 period-1 인덱스 부터 백테스팅 시작
+        price_data=price_data[agent1.window:] #LSTM window 고려, Agent마다 window size 상이
+        PV_data=[]
+        
+        ##에이전트 리셋
+        agent1.reset()
+        agent2.reset()
+        agent3.reset()
+        
+        for idx_,price in enumerate(price_data):                           #앙상블 에이전트 백테스팅
+            
+            Agent=self.max_sharpe(agent1,agent2,agent3,idx_)               #에이전트 선정
+            self.Agent_update(Agent,self.Agent_cash,self.Agent_stock,self.Agent_PV,price) #개별 에이전트 상태 업데이트
+            self.Agent_cash,self.Agent_stock,self.Agent_PV=Agent.Ensemble_step(val_data,price_data,Agent.cash,Agent.stock,Agent.PV,idx_)   #1step 진행
+            
+            PV_data.append(self.Agent_PV)
+            print(idx_+1,'/',len(price_data),'Portfolio value:',float(self.Agent_PV),'Agent name:',Agent,'cash',self.Agent_cash,'stock',self.Agent_stock)
+        
+        #시각화
+        fig,ax=plt.subplots(2,1,figsize=(10,9))
+        ax[0].set_ylabel('Ensemble Agent PV')
+        ax[0].plot(PV_data)
+
+        ax[1].set_ylabel('price')
+        ax[1].plot(price_data)
+        
+        beta=(((price_data[-1]/price_data[0])-1)*100).item()  #베타
+        agent_return=float(((PV_data[-1]/PV_data[0])-1)*100)  #에이전트 수익률
+        Alpha= agent_return-beta                              #알파
+        
+        print(beta,'beta value')
+        print(agent_return,'Ensemble Agent return')
+        print(Alpha,'Ensemble Agent Alpha')
+        
+        
+        return PV_data
+    
