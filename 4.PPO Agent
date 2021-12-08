@@ -1,0 +1,334 @@
+class PPO(nn.Module,Env):
+    
+    #https://github.com/nikhilbarhate99/PPO-PyTorch/blob/master/PPO.py 참고 코드 
+    
+    def __init__(self,window,                          #LSTM 윈도우 사이즈
+                       cash,                            #초기 보유현금
+                        cost,                           #수수료 %
+                        minute,                         #데이터 분봉 
+                        device,                         #디바이스 cpu or gpu 
+                        k_epoch,                         #K번 반복
+                        data_count,                      #데이터갯수
+                        raio,                                 #train set과 val set의 비율
+                        train_val_test,                       # train 인지 validation 인지 test인지
+                        coin_or_stock                        #coin or stock 
+                         ):                       
+                 
+        #클래스 상속
+        nn.Module.__init__(self)
+        Env.__init__(self,coin_or_stock)
+        
+        #데이터
+        self.train_data,self.val_data,self.test_data,self.close_=self.input_create(minute, #minute:분봉
+                                                                             ratio,       #ratio는 데이터셋 비율을 리스트로 넣음
+                                                                             data_count) #호출할 데이터수
+                                                                            #인풋 호출
+        
+        #train or val or test셋 호출
+        if train_val_test=='train':
+            self.input=self.close_[0]
+            self.scale_input=self.train_data
+        elif train_val_test=='val':
+            self.input=self.close_[1]
+            self.scale_input=self.val_data
+        else:
+            self.input=self.close_[2]
+            self.scale_input=self.test_data
+        
+        self.window=window
+        self.price_data=self.input.to(device)[self.window-1:]   
+        self.scale_price_data=self.scale_input.to(device)[self.window-1:]
+        
+        self.check_point=os.path.join('PPO_weight')  #세이브포인트
+        
+        #데이터 가공
+        self.LSTM_input,idx_=self.LSTM_observation(self.scale_input,self.window)          #LSTM에 들어갈형태의 인풋
+        self.LSTM_input_size=self.LSTM_input.size()[2]                                #LSTM인풋디멘션( LSTM의 인풋형태: 윈도우사이즈,총시퀀스길이,디멘션)
+        
+        #에이전트 변수
+        self.cash=cash  #가진 현금
+        self.cost=cost #수수료 비용
+        self.PV=0    #현 포트폴리오 벨류 저장
+        self.past_PV=self.cash #한스탭이전 포트폴리오 벨류 (초기는 현금)
+        self.stock=0 #가진 주식수
+        self.gamma=0.99
+        self.Cumulative_reward=0 #누적 리워드
+        self.old_prob=0#old prob 저장
+        self.total_loss=0 # actor_loss+critic_loss 
+        self.Ensemble_strategy=False #앙상블 진행중일경우 True
+        
+        self.Advantage_hat=[]
+        self.Advantage=0
+        self.target_data=[]
+        
+        self.next_step=[]
+        self.action_data=[]
+        self.reward_data=[]
+        self.step_data=[]
+        
+        self.epsilon=0.2   #PPO의 입실론
+        self.batch_size=10 #몇개의 스텝씩 학습할것인가
+        self.lambda_=0.95  #람다값
+        self.K_epoch=k_epoch
+        self.idx=0         #idx (policy 추출위함)
+        self.device=device
+        
+        
+    def reset(self):
+        self.cash=cash  #가진 현금
+        self.cost=cost #수수료 퍼센트
+        self.PV=0    #포트폴리오 벨류 저장
+        self.past_PV=self.cash #이전 포트폴리오 벨류 (초기는 현금과같음))
+        self.stock=0 #가진 주식수
+        self.step_data=[]
+        self.gamma=0.99
+        self.Cumulative_reward=0 #누적 리워드
+        
+        self.old_prob=[]
+        self.next_step=[]
+        self.action_data=[]
+        self.reward_data=[]
+        self.step_data=[]
+        self.idx=0
+        
+        self.Advantage_hat=[]
+        self.Advantage=0
+        self.target_data=[]
+        
+        
+        
+    def decide_action(self,policy):    #개별액션 결정함수, 매매할 수량과 액션을 반환
+        policy1=torch.clamp(policy,0,1)
+        action_s=Categorical(policy1)
+        action=action_s.sample() #매도시 최소 1주 매도
+        
+        if action==0:  #매도
+            if self.coin_or_stock=='coin':
+                unit0=policy1[0]*self.stock
+                unit=[unit0.item(),0,0]
+            else:
+                unit0=max((policy1[0]*self.stock),1)
+                unit0=round(float(unit0))
+                unit=[unit0,0,0]
+
+        elif action==2:      #매수
+            unit2=(policy1[2]*self.cash)/self.price
+            if self.coin_or_stock=='coin':
+                unit=[0,0,unit2.item()]
+            else:
+                unit2=max(((policy1[2]*self.cash)/self.price),1)
+                unit2=round(float(unit2))
+                if unit2<1: #소수점단위의 주식수는 없으므로
+                    unit2=0
+                unit=[0,0,unit2]
+
+        else: #관망
+            unit=[0,0,0]
+        return action,unit
+    
+    
+    def optimize(self,policy_net,value_net):
+        prob=policy_net(self.LSTM_input)
+        log_policy=F.log_softmax(prob)
+        value=value_net(self.LSTM_input) 
+        policy=F.softmax(prob)
+
+        total_reward=torch.tensor(self.reward_data,dtype=self.LSTM_input.dtype).to(self.LSTM_input.device)
+        total_step=self.step_data
+        total_next=self.next_step
+        
+        #Advantage_hat 계산(#PPO 논문 12번식) GAE
+        with torch.no_grad():
+            target= total_reward+self.gamma*value_net(self.LSTM_input)[total_next]
+            delta= target.detach()-value_net(self.LSTM_input)[total_step]
+            delta= torch.Tensor(delta.tolist()[::-1]).to(self.LSTM_input.device)  #델타를 역순으로 저장한다
+            
+            self.Advantage_hat=[]
+            for delta_ in delta:
+                self.Advantage=((self.gamma*self.lambda_))*self.Advantage+delta_
+                self.Advantage_hat.append(self.Advantage)
+
+        self.Advantage_hat.reverse()
+        self.Advantage_hat= torch.tensor(self.Advantage_hat,dtype=torch.float).view(-1).to(self.LSTM_input.device)
+
+        #에피소드때 구한 트레젝터리 가져온뒤 surr obj 및 ratio계산
+        old_log_prob=torch.tensor(self.old_prob,dtype=torch.float).to(self.LSTM_input.device)
+        old_log_prob=old_log_prob[total_step]
+        
+        old_action=torch.tensor(self.action_data).to(self.LSTM_input.device)
+        new_prob=log_policy[total_step] 
+        new_prob=new_prob.gather(1,old_action).view(-1)
+        
+        prob_ratio =torch.exp(new_prob-old_log_prob).view(-1)
+        surr1=prob_ratio *self.Advantage_hat
+        surr2=torch.clamp(prob_ratio,1-self.epsilon,1+self.epsilon)*torch.tensor(self.Advantage_hat).to(self.LSTM_input.device)
+        
+        #loss 계산
+        policy_loss= -torch.min(surr1,surr2).to(self.LSTM_input.device)
+        policy_loss= policy_loss.mean()
+        value_loss= F.mse_loss(value[total_step],target.detach())
+        self.total_loss= policy_loss+value_loss
+        
+        #업데이트
+        policy_net.optimizer.zero_grad()
+        value_net.optimizer.zero_grad()
+        
+        policy_loss.backward(retain_graph=True)
+        value_loss.backward()
+        
+        torch.nn.utils.clip_grad_norm_(policy_net.parameters(), 0.01)
+        torch.nn.utils.clip_grad_norm_(value_net.parameters(), 0.01)
+        
+        policy_net.optimizer.step()
+        value_net.optimizer.step()
+        
+    
+    def train(self,epoch):
+        policy_net=PPO_actor(self.device,self.window) 
+        value_net=PPO_critic(self.device,self.window)
+        
+        PV_data=[]
+        loss_data=[]
+        reward_data=[]
+        
+        for _ in range(epoch):   #총 에포크 반복
+            self.reset()
+            
+            ##############에피소드 생성
+            for epi_step in range(len(self.price_data)-1):    #에피소드를 돈다(K=1인 반복횟수 에이전트. )
+                with torch.no_grad():
+                    prob_=policy_net(self.LSTM_input).to(self.device)  
+                
+                policy=F.softmax(prob_)
+                log_prob=F.log_softmax(prob_)
+
+                self.price=self.price_data[[epi_step]]   #현재 주가업데이트
+                action,unit=self.decide_action(policy[epi_step])
+
+                #(액션 리워드 스탭 )각각저장 및 스탭실행
+                action,reward,step_=self.discrete_step(action,unit,epi_step,self) 
+                self.old_prob.append(F.log_softmax(prob_)[epi_step][action])
+                self.next_step.append(step_+1)
+                self.Cumulative_reward+=reward
+                
+            for K_epoch in range(self.K_epoch): #논문에서 정의한 K 만큼 반복학습
+                #############생성된 에피소드 학습
+                self.optimize(policy_net,value_net)
+                
+                reward_data.append(self.Cumulative_reward)
+                PV_data.append(self.PV)
+
+                policy_net.save()
+                value_net.save()
+            
+            print('학습중',_+1,'/',epoch,'진행','리워드',self.Cumulative_reward.item(),'PV',self.PV.item(),'토탈로스',self.total_loss.item())
+
+        plt.plot(reward_data)
+        plt.title('total 리워드')
+
+        plt.plot(loss_data)
+
+
+            #old는 에피소드돌릴때 폴리시(실제했던확률)- 즉 액션할때 했던 폴리시
+            #. new는 학습할때 새로뽑은 폴리시
+            
+            
+    
+            
+    def back_test(self,train_val_test): #백테스팅
+        self.reset() #리셋
+        
+        #train or val or test셋 호출
+        if train_val_test=='train':
+            self.input=self.close_[0]
+            self.scale_input=self.train_data
+        elif train_val_test=='val':
+            self.input=self.close_[1]
+            self.scale_input=self.val_data
+        else:
+            self.input=self.close_[2]
+            self.scale_input=self.test_data
+            
+        self.price_data=self.input.to(device)[self.window-1:]   
+        self.scale_price_data=self.scale_input.to(device)[self.window-1:]
+        
+        #데이터 가공
+        self.LSTM_input,idx_=self.LSTM_observation(self.scale_input,self.window)          #LSTM에 들어갈형태의 인풋
+        self.LSTM_input_size=self.LSTM_input.size()[2]                               
+        
+            
+        #네트워크 호출
+        policy_net=PPO_actor(self.device,self.window) 
+        
+        #저장된 가중치 load
+        policy_net.load()
+        
+        #누적 PV데이터
+        PV_data=[]
+        
+        #back testing
+        for step in range(len(self.price_data)-1):
+            prob_=policy_net(self.LSTM_input).to(self.device)  
+            policy=F.softmax(prob_) #policy
+
+            self.price=self.price_data[step]   #현재 주가업데이트
+            action,unit=self.decide_action(policy[step]) #액션 선택
+            action,reward,step_=self.discrete_step(action,unit,step,self)  #PV및 cash, stock 업데이트
+            
+            #데이터 저장
+            PV_data.append(self.PV)
+            
+            if step%50==0:
+                print(step+1,'/',len(self.price_data),'테스팅중..')
+            
+        #시각화
+        print('PPO Agent 백테스팅 완료')
+        
+        if self.Ensemble_strategy==False: #앙상블중에는 출력하지 않음
+            fig,ax=plt.subplots(2,1,figsize=(10,9))
+            ax[0].set_ylabel('Agent PV')
+            ax[0].plot(PV_data)
+
+            ax[1].set_ylabel('price')
+            ax[1].plot(self.price_data)
+        
+        print((((self.price_data[-1]/self.price_data[0])-1)*100).item(),':beta value')
+        print(float(((PV_data[-1]/PV_data[0])-1)*100),':Agent return')
+        
+        return PV_data
+    
+    
+    def Ensemble_step(self,data,close_data,cash,stock,PV,step): #앙상블시 스탭
+        self.reset() #리셋
+        
+        #앙상블 에이전트의 PortFolio 업데이트
+        self.cash=cash
+        self.stock=stock
+        self.PV=PV
+        
+        self.scale_input=data
+        self.input=close_data
+            
+        #데이터 가공
+        self.LSTM_input,idx_=self.LSTM_observation(self.scale_input,self.window)          #LSTM에 들어갈형태의 인풋
+        self.LSTM_input_size=self.LSTM_input.size()[2]                               
+        
+            
+        #네트워크 호출
+        policy_net=PPO_actor(self.device,self.window) 
+        
+        #저장된 가중치 load
+        policy_net.load()
+        
+        prob_=policy_net(self.LSTM_input).to(self.device)  
+        policy=F.softmax(prob_) #policy
+
+        self.price=close_data[step]   #현재 주가업데이트
+        action,unit=self.decide_action(policy[step]) #액션 선택
+        action,reward,step_=self.discrete_step(action,unit,step,self)  #PV및 cash, stock 업데이트
+        
+        
+        return self.cash,self.stock,self.PV
+        
+
+    
