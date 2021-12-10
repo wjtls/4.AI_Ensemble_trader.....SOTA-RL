@@ -1,6 +1,5 @@
 class PPO(nn.Module,Env):
     
-    #https://github.com/nikhilbarhate99/PPO-PyTorch/blob/master/PPO.py 참고 코드 
     
     def __init__(self,window,                          #LSTM 윈도우 사이즈
                        cash,                            #초기 보유현금
