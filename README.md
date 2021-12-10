@@ -49,10 +49,22 @@
 
 
 ## 본론
-Ddpg 고른이유
-It is simple compared to other states of the arts (SOTA) algorithms and serves as a good example for the DRL algorithms in ElegantRL. Due to the simplicity, the user could focus more on the stock trading strategy, and selects the best algorithm from backtesting.
-Unlike DQN, it is able to deal with continuous rather than discrete state and action space, thus can trade over a large stock set.
 
+ - ## PPO
+   PPO는 new policy가 old policy 와 크게 다르지않도록 Clipping 하기 때문에 논문에서 안정성이 높고 빠르다는 결과를 보인다. <br/>
+   또한 상승구간에서 타 에이전트에 비해 수익률이 잘나오는 편이다. 그러나 하락구간에서 A2C보다 낮은 샤프지수를 보인다.
+ 
+
+ - ## RDPG
+ - DDPG 알고리즘에 RNN을 결합한 알고리즘.
+ - DQN 알고리즘과 다르게 이산공간 보다는 연속행동공간에서 잘 작동하며 이로인해 더 큰 data set에서 트레이딩 할수있다. <br/>
+ - 다른 SOTA 알고리즘에 비해 간단한 경향이 있으며 이러한 단순성 때문에 사용자는 좀더 트레이딩 전략에 초점을 맞출수 있으며 <br/>
+   actor network에서 tanh 활성화 함수 사용으로 exploration을 더 잘하게된다.
+ - Data의 상관관계 감소를 위해 
+ 
+ - ## A2C
+ 
+ 
 ## 결론
 
 ## 한계 및 개선
