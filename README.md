@@ -22,16 +22,28 @@
 - A2C 에이전트 (강화학습)
 - PPO 에이전트 (강화학습)
 - DDPG 에이전트 (강화학습)
+
 - optimize (over fitting 방지를 위한 clip gradient 사용)
 - 에이전트 앙상블 (sharpe ratio 사용)
 
 
 ## 요약
-![image](https://user-images.githubusercontent.com/60399060/145546012-46aebe4a-7ee4-4b54-8ff7-3de0866f640c.png)
+- ![image](https://user-images.githubusercontent.com/60399060/145546012-46aebe4a-7ee4-4b54-8ff7-3de0866f640c.png)
 
+- Train the three algorithms that take actions in the environment and ensemble the three agents together using the Sharpe ratio.
+- 3개의 에이전트를 멀티프로세싱 방식(현 프로젝트에서는 동기적 학습실행)으로 각각 학습하여 가중치를 저장.
+- 기간을 설정하고 구간별로 rolling 하여 샤프지수 계산.
+- 매스탭마다 가장 높은 샤프지수를 가진 에이전트를 선정하여 해당 에이전트로 트레이딩.   
+<br/>
+<br/>
+<br/>
+<br/>
 
-<img src="https://user-images.githubusercontent.com/60399060/145546012-46aebe4a-7ee4-4b54-8ff7-3de0866f640c.png" width="450px" height="300px" title="px(픽셀) 크기 설정" alt="RubberDuck"></img><br/>
+- ![image](https://user-images.githubusercontent.com/60399060/145560383-77da080e-b028-4c8e-b5d0-a82ed7143afc.png)
 
+- <img src="https://user-images.githubusercontent.com/60399060/145560523-20205c68-449d-45cc-bc52-32cac10a760d.png" width="430px" height="400px" title="px(픽셀) 크기 설정" alt="RubberDuck"></img><br/>
+
+- At each state, one of three possible actions is taken on stock d(d=1,...,D) in the portfolio.
 
 
 ## 본론
