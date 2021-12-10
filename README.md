@@ -15,15 +15,15 @@
   이 프로젝트를 완료하게 된다면 A2C,RDPG,PPO 만 사용하는 것이 아니라 여러 SOTA 에이전트 사용 및 유동적인 팩터를 사용하는 트레이더를 구현할수 있을것이라 생각하여 진행
 
  
-## 순서
+## 기능
 
-- API와 csv를 사용하여 비트코인 및 주가데이터 호출
+- API와 csv를 사용하여 비트코인 또는 SP500데이터 호출
 - Env 클래스 생성 (리워드 계산 및 전처리)
-- A2C 에이전트
-- PPO 에이전트
-- DDPG 에이전트
-- over fitting 방지를 위한 clip gradient 사용
-- 강화학습 에이전트 앙상블
+- A2C 에이전트 (강화학습)
+- PPO 에이전트 (강화학습)
+- DDPG 에이전트 (강화학습)
+- optimize (over fitting 방지를 위한 clip gradient 사용)
+- 에이전트 앙상블 (sharpe ratio 사용)
 
 
 ## 흐름
