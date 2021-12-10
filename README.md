@@ -26,8 +26,11 @@
 - 에이전트 앙상블 (sharpe ratio 사용)
 
 
-## 흐름
+## 요약
+![image](https://user-images.githubusercontent.com/60399060/145546012-46aebe4a-7ee4-4b54-8ff7-3de0866f640c.png)
 
+
+<img src="https://user-images.githubusercontent.com/60399060/145546012-46aebe4a-7ee4-4b54-8ff7-3de0866f640c.png" width="450px" height="300px" title="px(픽셀) 크기 설정" alt="RubberDuck"></img><br/>
 
 
 
