@@ -102,7 +102,7 @@ class PPO(nn.Module,Env):
         action=action_s.sample() #매도시 최소 1주 매도
         
         
-        if self.Ensemble_strategy=True: #백테스팅 중이거나 앙상블중인경우
+        if self.Ensemble_strategy==True: #백테스팅 중이거나 앙상블중인경우
             action=torch.argmax(policy1)
         
         if action==0:  #매도
@@ -287,7 +287,7 @@ class PPO(nn.Module,Env):
         #시각화
         print('PPO Agent 백테스팅 완료')
         
-        if self.Ensemble_strategy==False: #앙상블중에는 출력하지 않음
+        if self.Ensemble_strategy===False: #앙상블중에는 출력하지 않음
             fig,ax=plt.subplots(2,1,figsize=(10,9))
             ax[0].set_ylabel('Agent PV')
             ax[0].plot(PV_data)
