@@ -48,7 +48,7 @@ class Ensemble(Env):
         return qp
     
     
-    def RF(self,price_data):  #risk free rate 안정수익(기존 인덱스 수익)
+    def RF(self,price_data):  #risk free rate 무위험수익(금리 or 베타값 사용)
         rf=(((price_data[-1]/price_data[0])-1)*100)
         return rf
     
