@@ -29,6 +29,9 @@
 ## 흐름
 
 ## 본론
+Ddpg 고른이유
+It is simple compared to other states of the arts (SOTA) algorithms and serves as a good example for the DRL algorithms in ElegantRL. Due to the simplicity, the user could focus more on the stock trading strategy, and selects the best algorithm from backtesting.
+Unlike DQN, it is able to deal with continuous rather than discrete state and action space, thus can trade over a large stock set.
 
 ## 결론
 
