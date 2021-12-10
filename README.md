@@ -43,10 +43,12 @@
 - <img src="https://user-images.githubusercontent.com/60399060/145567671-98bd6c89-daac-4c6b-b45a-f1b47df612d3.png" width="710px" height="820px" title="px(픽셀) 크기 설정" alt="RubberDuck"></img><br/>
 
 - Discrete action space (PPO,A2C) 에서 action = [0=매도 ,1=관망 ,2= 매수]로 설정하였고, <br/> 
-  Continuous action space (RDPG)에서 action = {-k,…-1,0,1,…,k} 로 정의 (k < maximum amount of shares for each buying action)
+  Continuous action space (RDPG)에서 action = {-k,…-1,0,1,…,k} 로 정의 (k < maximum amount of shares for each buying action) 
+  <br/>  
 - Reward를 위와 같이 정의할 경우 next step에서 주가가 상승할때 매수 또는 홀딩으로 PV를 최대화 할수있으며 <br/>
-  next step에서 주가가 하락하는 경우 이전 스탭에서 매도 하려는 성향을 가진다. 
-- state 는 종가 하나만 사용한다.(PCA나 양질의 데이터 생성 등으로 curse of dimentionality문제를 완화한다면 가격 데이터 이외에 여러 지표를 사용가능)
+  next step에서 주가가 하락하는 경우 이전 스탭에서 매도 하려는 성향을 가진다.
+  <br/>   
+- state 는 종가 하나만 사용한다.(PCA나 양질의 데이터 생성 등으로 curse of dimensionality 문제를 완화한다면 가격 데이터 이외에 여러 지표를 사용가능)
 
 
 ## 본론
