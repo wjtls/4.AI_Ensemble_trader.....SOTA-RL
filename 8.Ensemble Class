@@ -197,11 +197,13 @@ class Ensemble(Env):
         
         Market_return=(((price_data[-1]/price_data[0])-1)*100).item()  #시장수익률
         agent_return=float(((PV_data[-1]/PV_data[0])-1)*100)  #에이전트 수익률
-        Alpha= agent_return-beta                              #알파
+        Alpha= agent_return-Market_return                              #알파
+        beta= agent_return/Market_return #베타
         
         print(Market_return,'Market rate of return.')
         print(agent_return,'Ensemble Agent return')
         print(Alpha,'Ensemble Agent Alpha')
+        print(beta,'Ensemble Agent Beta')
         
         
         return PV_data
