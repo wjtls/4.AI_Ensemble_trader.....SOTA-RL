@@ -1,4 +1,4 @@
-# [프로젝트]RDPG,PPO,A2C 앙상블 트레이더
+# RDPG,PPO,A2C 앙상블 트레이더
  ## SP500 trading of SOTA reinforcement learning Ensemble Agent
  
 - 도구
