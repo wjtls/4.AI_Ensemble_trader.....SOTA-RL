@@ -12,7 +12,7 @@
 - 목표: 앙상블을 사용함으로써 단일에이전트의 휴리스틱한 전략보다 하락장과 상승장에서 안정적으로 트레이딩
 
 - 구현 이유: Deep Reinforcement Learning for Automated stock Trading :An Ensemble Strategy 라는 논문을 보게 됐고,
-  이 프로젝트를 완료하게 된다면 A2C,RDPG,PPO 만 사용하는 것이 아니라 여러 SOTA 에이전트 사용 및 유동적인 팩터를 사용하는 트레이더를 구현할수 있을것이라 생각하여 진행
+  이 프로젝트를 완료하게 된다면 A2C,RDPG,PPO 만 사용하는 것이 아니라 여러 SOTA 에이전트 사용 및 더 많은 팩터를 사용하는 트레이더를 구현할수 있을것이라 생각하여 진행
   
  
 ## 기능
@@ -22,7 +22,6 @@
 - A2C 에이전트 (강화학습)
 - PPO 에이전트 (강화학습)
 - DDPG 에이전트 (강화학습)
-
 - optimize (over fitting 방지를 위한 clip gradient 사용)
 - 에이전트 앙상블 (sharpe ratio 사용)
 
@@ -65,9 +64,29 @@
    actor network에서 tanh 활성화 함수 사용으로 exploration을 더 잘하게된다.
  - Data의 상관관계 감소를 위해 random sampling
  
+ 
  - ## A2C
  
  
 ## 결론
 
 ## 한계 및 개선
+- 데이터의 노이즈로 인해 오버피팅 가능성 존재.
+    - Denoise Auto Encoding 방식으로 데이터의 노이즈 제거 가능
+
+- State의 정의 (차원의 저주 문제로 인해 1개의 feature만 사용)
+    - price 데이터가 다른 팩터와 다중공선성 문제를 가질수 있으므로 Feature Extraction 방법으로 차원의 저주와 높은 상관계수 문제를 해결
+
+- RDPG 알고리즘의 하이퍼파라미터 찾기가 타 에이전트에 비해 어려운편.<br/> 
+    - Auto ML 방식으로 개선 예정
+    - continuous action space에서 효과적인 다른 SOTA 에이전트 사용 가능 (TD3,SLAC,SAC,D4PG 등등)
+ 
+- 시장은 t시점에서 알파를 찾아도 향후 새로운 알파가 생겨난다. <br/> 
+    - 단일 에이전트 보다는 유동적으로 전략을 찾을수 있지만 현 앙상블 에이전트에서도 여전히 전략간 상관계수와 편향이 있다.  <br/> 
+    - 더많은 에이전트를 앙상블하거나 MARL(Multi-Agent-Reinforcement-learning) 사용 예정   <br/>
+    - 각 에이전트가 알고리즘 자체를 스스로 개선하도록 하여 여러 에이전트들의 전략간 상관계수와 편향을 낮출 예정
+
+    
+    
+    
+    
