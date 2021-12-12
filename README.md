@@ -30,7 +30,7 @@
 - ![image](https://user-images.githubusercontent.com/60399060/145546012-46aebe4a-7ee4-4b54-8ff7-3de0866f640c.png)
 
 - Train the three algorithms that take actions in the environment and ensemble the three agents together using the Sharpe ratio.
-- 3개의 에이전트를 멀티프로세싱 방식(현 프로젝트에서는 동기적 학습실행)으로 각각 학습하여 가중치를 저장.
+- 3개의 에이전트를 순차적으로으로 각각 학습하여 가중치를 저장(GPU 사양이 된다면 멀티프로세싱 사용).
 - 기간을 설정하고 구간별로 rolling 하여 샤프지수 계산.
 - 매스탭마다 가장 높은 샤프지수를 가진 에이전트를 선정하여 해당 에이전트로 1스탭 트레이딩.   
 <br/>
