@@ -71,16 +71,13 @@
 ## 결론
 
 ## 한계 및 개선
-- 데이터의 노이즈로 인해 오버피팅 가능성 존재.
-    - Denoise Auto Encoding 방식으로 데이터의 노이즈 제거 가능
-
-- State의 정의 (차원의 저주 문제로 인해 1개의 feature만 사용)
-    - price 데이터가 다른 팩터와 다중공선성 문제를 가질수 있으므로 Feature Extraction 방법으로 차원의 저주와 높은 상관계수 문제를 해결
-
+- 데이터의 노이즈로 인해 오버피팅 가능성 존재.<br/>
+    - Denoise Auto Encoding 방식으로 데이터의 노이즈 제거 가능<br/><br/>
+- State의 정의 (차원의 저주 문제로 인해 1개의 feature만 사용)<br/>
+    - price 데이터가 다른 팩터와 다중공선성 문제를 가질수 있으므로 Feature Extraction 방법으로 차원의 저주와 높은 상관계수 문제 해결 예정<br/><br/>
 - RDPG 알고리즘의 하이퍼파라미터 찾기가 타 에이전트에 비해 어려운편.<br/> 
-    - Auto ML 방식으로 개선 예정
-    - continuous action space에서 효과적인 다른 SOTA 에이전트 사용 가능 (TD3,SLAC,SAC,D4PG 등등)
- 
+    - Auto ML 방식으로 개선 예정<br/>
+    - continuous action space에서 효과적인 다른 SOTA 에이전트 사용 (TD3,SLAC,SAC,D4PG 등등)<br/><br/>
 - 시장은 t시점에서 알파를 찾아도 향후 새로운 알파가 생겨난다. <br/> 
     - 단일 에이전트 보다는 유동적으로 전략을 찾을수 있지만 현 앙상블 에이전트에서도 여전히 전략간 상관계수와 편향이 있다.  <br/> 
     - 더많은 에이전트를 앙상블하거나 MARL(Multi-Agent-Reinforcement-learning) 사용 예정   <br/>
