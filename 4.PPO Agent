@@ -295,7 +295,7 @@ class PPO(nn.Module,Env):
             ax[1].set_ylabel('price')
             ax[1].plot(self.price_data)
         
-        print((((self.price_data[-1]/self.price_data[0])-1)*100).item(),':beta value')
+        print((((self.price_data[-1]/self.price_data[0])-1)*100).item(),':Market rate of return')
         print(float(((PV_data[-1]/PV_data[0])-1)*100),':Agent return')
         
         return PV_data
