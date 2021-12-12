@@ -72,7 +72,7 @@
 
 ## 한계 및 개선
 - 데이터의 노이즈로 인해 오버피팅 가능성 존재.<br/>
-    - Denoise Auto Encoder 방식으로 데이터의 노이즈 제거 가능<br/><br/>
+    - Denoise Auto Encoder(DAE) 방식으로 데이터의 노이즈 제거 가능<br/><br/>
 - State의 정의 (차원의 저주 문제로 인해 1개의 feature만 사용)<br/>
     - 팩터들 사이에서 다중공선성 문제가 생길 수 있으므로 Feature Extraction 방법으로 차원의 저주와 높은 상관계수 문제 해결 예정<br/><br/>
 - RDPG 알고리즘의 하이퍼파라미터 찾기가 타 에이전트에 비해 어려운편.<br/> 
