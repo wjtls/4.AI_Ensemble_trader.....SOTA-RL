@@ -195,11 +195,11 @@ class Ensemble(Env):
         ax[1].set_ylabel('price')
         ax[1].plot(price_data)
         
-        beta=(((price_data[-1]/price_data[0])-1)*100).item()  #베타
+        Market_return=(((price_data[-1]/price_data[0])-1)*100).item()  #시장수익률
         agent_return=float(((PV_data[-1]/PV_data[0])-1)*100)  #에이전트 수익률
         Alpha= agent_return-beta                              #알파
         
-        print(beta,'beta value')
+        print(Market_return,'Market rate of return.')
         print(agent_return,'Ensemble Agent return')
         print(Alpha,'Ensemble Agent Alpha')
         
