@@ -21,7 +21,8 @@
 - Env 클래스 생성 (리워드 계산 및 전처리)
 - A2C 에이전트 (강화학습)
 - PPO 에이전트 (강화학습)
-- DDPG 에이전트 (강화학습)
+- RDPG 에이전트 (강화학습)
+- Replay buffer 사용
 - optimize (over fitting 방지를 위한 clip gradient 사용)
 - 에이전트 앙상블 (sharpe ratio 사용)
 
@@ -62,7 +63,7 @@
  - DQN 알고리즘과 다르게 이산공간 보다는 연속행동공간에서 잘 작동하며 이로인해 더 큰 data set에서 트레이딩 할수있다. <br/>
  - 다른 SOTA 알고리즘에 비해 간단한 경향이 있으며 이러한 단순성 때문에 사용자는 좀더 트레이딩 전략에 초점을 맞출수 있으며 <br/>
    actor network에서 tanh 활성화 함수 사용으로 exploration을 더 잘하게된다.
- - Data의 상관관계 감소를 위해 random sampling
+ - Data 효율성 증가를 위해 Replay buffer 사용, 샘플간 상관관계 감소를 위해 random sampling
  
  
  - ## A2C
