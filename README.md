@@ -83,7 +83,7 @@
  - A2C는 스톡 트레이딩환경에서 안정적이다.
  
  
-## 결론
+## 결론 (수정 필요 A2C 학습 제대로 안됨)
 ![image](https://user-images.githubusercontent.com/60399060/145931851-80c8ce29-193b-4e46-86ed-3f8b0dc65f3e.png)
 - kindex SP500 validation set 에서 백테스팅 결과
 - 시장 수익률 :-0.3765702247619629 %
