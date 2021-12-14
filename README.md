@@ -92,6 +92,8 @@
 
 ![image](https://user-images.githubusercontent.com/60399060/145932818-45801586-d3c1-4371-9015-f0403e97e256.png)
 ![image](https://user-images.githubusercontent.com/60399060/145932970-18f6c856-6a45-45ad-bc29-461cc750470d.png)
+![image](https://user-images.githubusercontent.com/60399060/145933455-8ba2618a-3201-43dc-869f-7d445d98d223.png)
+
 
 - 앙상블 에이전트는 약 100- 200 step의 하락구간에서 주로 A2C와 DDPG 알고리즘으로 거래를 하였고 
 - 200-350 step 까지의 상승구간에서 주로 PPO 알고리즘을 사용하여 거래하였다
