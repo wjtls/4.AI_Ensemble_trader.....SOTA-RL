@@ -60,10 +60,16 @@
 
  - ## RDPG
  - DDPG 알고리즘에 RNN을 결합한 알고리즘.
- - DQN 알고리즘과 다르게 이산공간 보다는 연속행동공간에서 잘 작동하며 이로인해 더 큰 data set에서 트레이딩 할수있다. <br/>
+ - 연속 행동공간에서 행동의 확률분포를 출력하지 않고 이산적인 값을 출력한다.
+ - DQN,PPO와 같은 이산공간 알고리즘과 다르게 연속행동공간에서 잘 작동하며 이로인해 더 큰 data set에서 트레이딩 할수있다. <br/>
  - 다른 SOTA 알고리즘에 비해 간단한 경향이 있으며 이러한 단순성 때문에 사용자는 좀더 트레이딩 전략에 초점을 맞출수 있으며 <br/>
    actor network에서 tanh 활성화 함수 사용으로 exploration을 더 잘하게된다.
  - Data 효율성 증가를 위해 Replay buffer 사용, 샘플간 상관관계 감소를 위해 random sampling
+
+
+ - 세부 
+   Deterministic 하게 바꾸는 과정에서 r+감마*Q(s,u) 사용으로 환경만 영향을 미치므로 과거 action에 영향을 받지않는다
+   따라서 off policy 방식으로 학습을 하며 Replay buffer를 사용할수 있게된다.
  
  
  - ## A2C
