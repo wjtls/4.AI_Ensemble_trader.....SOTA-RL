@@ -72,7 +72,6 @@
  - ![image](https://user-images.githubusercontent.com/60399060/145927678-6fb737cd-989f-4c41-9199-85d22be65266.png)
 
 
-
  - 세부 
    Deterministic 하게 바꾸는 과정에서 r+감마*Q(s,u) 사용으로 환경만 영향을 미치므로 과거 action에 영향을 받지않는다
    따라서 off policy 방식으로 학습을 하며 Replay buffer를 사용할수 있게된다.
@@ -85,6 +84,11 @@
  
  
 ## 결론
+![image](https://user-images.githubusercontent.com/60399060/145931851-80c8ce29-193b-4e46-86ed-3f8b0dc65f3e.png)
+kindex SP500 validation set 에서 백테스팅 결과
+시장 수익률 :-0.3765702247619629 %
+Ensemble Agent return : 0.18998384475708008 %
+Ensemble Agent Alpha : 0.566554069519043 %
 
 ## 한계 및 개선
 - 데이터의 노이즈로 인해 오버피팅 가능성 존재.<br/>
