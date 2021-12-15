@@ -76,7 +76,7 @@
  
    - ![image](https://user-images.githubusercontent.com/60399060/146136194-aa3647e1-29a8-45f4-a21c-6d38884ab353.png)
    - PPO는 새로운 정책이 기존 정책에서 너무 멀리 바뀌는 것을 피하기 위해 대리 목표를 활용하여 min을 취함으로 샘플 효율성 문제를 해결한다.
-   - PPO는 정책 업데이트를 정규화하고 교육 데이터를 재사용할 수 있기 때문에 대리 목표는 PPO의 핵심 기능이다. 따라서 <br/>
+   - PPO는 정책 업데이트를 정규화하고 교육 데이터를 재사용할 수 있기 때문에 대리 목표는 PPO의 핵심 기능이다. 따라서 
      ppo 는 on policy이지만 on policy 의 수렴성과 대리목표 및 buffer 사용으로 off policy의 샘플 효율성을 모두 가진다. 
    - 상승구간에서 타 에이전트에 비해 수익률이 잘나오는 편이다. 그러나 하락구간에서 A2C보다 낮은 샤프지수를 보인다.
 
@@ -87,7 +87,7 @@
    - Data 효율성 증가와 샘플간 상관관계 감소를 위해 Replay buffer 사용. <br/><br/>
  
    - ![image](https://user-images.githubusercontent.com/60399060/146115365-355181cf-c4b1-4ff4-8665-d31b2670c287.png)
-   - 연속 행동공간에서 행동의 확률분포를 출력하지 않고 이산적인 값을 출력한다. (Q-learning method를 가져와서 연속행동공간에서의 off policy 알고리즘으로 활용) <br/>
+   - 연속 행동공간에서 행동의 확률분포를 출력하지 않고 이산적인 값을 출력한다. (Q-learning method를 가져와서 연속행동공간에서의 off policy 알고리즘으로 활용)
    - 다른 SOTA 알고리즘에 비해 간단한 경향이 있으며 이러한 단순성 때문에 사용자는 좀더 트레이딩 전략에 초점을 맞출수 있다. <br/><br/>
 
    - ![image](https://user-images.githubusercontent.com/60399060/146114550-5d2ebba7-4a0a-4824-9ae9-99ab787aaeb3.png)
@@ -109,6 +109,7 @@
    - 크리틱 네트워크로 Advantage function을 추정하므로 얼마나 좋은 액션인지 뿐만아니라 얼마나 더 좋아질수 있는지도 고려한다.
    
    - ![image](https://user-images.githubusercontent.com/60399060/146139038-3a3b8890-7850-43d4-8e8c-52569167f674.png)
+   - critic loss 는 actor loss
    - A2C는 주식 트레이딩환경에서 안정적이다.
    - 단점으로는 off policy 알고리즘에 비해 샘플효율성이 낮고, 데이터간 상관관계가 높을수 있다.
 
@@ -124,7 +125,6 @@
   - Ensemble Agent return : 0.18998384475708008 %
   - Ensemble Agent Alpha : 0.566554069519043 % <br/><br/>
 
-
   - 앙상블 에이전트는 약 100- 200 step의 하락구간에서 주로 A2C와 DDPG 알고리즘으로 거래를 하였고 
   - 200-350 step 까지의 상승구간에서 주로 PPO 알고리즘을 사용하여 거래하였다
 
@@ -137,21 +137,21 @@
   
 
 ## 문제점 및 개선방안
-  - MDP(Markov decision process) 정의 문제<br/>
+  - MDP(Markov decision process) 정의 문제
       - 현 프로젝트에서는 state= [price] 로 정의. 이는 환경을 충분히 설명하지 못하며 오버피팅 가능성이 높다. 따라서 여러 팩터를 사용할 필요성이 있다.
       - 여러 팩터들 사이에서 다중공선성 문제가 생길 수 있으므로 Feature Extraction 방법으로 차원의 저주와 높은 상관계수 문제 해결 가능<br/><br/>
 
-  - RDPG 알고리즘의 하이퍼 파라미터 튜닝 문제<br/>
+  - RDPG 알고리즘의 하이퍼 파라미터 튜닝 문제 
       - RDPG는 다른 RL알고리즘보다 파라미터 튜닝이 어려운 편이다.
-      - Auto ML 방식 사용 (하이퍼 파라미터를 자동으로 튜닝)<br/>
+      - Auto ML 방식 사용 (하이퍼 파라미터를 자동으로 튜닝)
       - continuous action space에서 효과적인 다른 SOTA 에이전트 사용 (TD3,SLAC,SAC,D4PG 등등)<br/><br/>
 
-  - A2C 알고리즘의 낮은 샘플 효율성 <br/>
+  - A2C 알고리즘의 낮은 샘플 효율성
       - Replay buffer 를 사용하는 ACER(Actor Critic with Experience replay buffer) 를 사용할수 있다.<br/><br/>
 
-  - 시장은 t시점에서 알파를 찾아도 향후 새로운 알파가 생겨난다. <br/> 
-      - 단일 에이전트 보다는 유동적으로 전략을 찾을수 있지만 현 앙상블 에이전트에서도 여전히 전략간 상관계수와 편향이 있다.  <br/> 
-      - 더많은 에이전트를 앙상블하거나 MARL(Multi-Agent-Reinforcement-learning) 사용   <br/>
+  - 시장은 t시점에서 알파를 찾아도 향후 새로운 알파가 생겨난다.
+      - 단일 에이전트 보다는 유동적으로 전략을 찾을수 있지만 현 앙상블 에이전트에서도 여전히 전략간 상관계수와 편향이 있다.
+      - 더많은 에이전트를 앙상블하거나 MARL(Multi-Agent-Reinforcement-learning) 사용 
       - 각 에이전트가 알고리즘 자체를 스스로 개선하도록 하여 여러 에이전트들의 전략간 상관계수와 편향을 낮출 수 있다.
 
 
