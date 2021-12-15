@@ -60,12 +60,16 @@
 
 
 ## 본론
+ - 기존 RL의 가장 큰 문제는 최근 폴리시에 일반적으로 의존하는데 이는 observation과 reward등의 트레젝터리 데이터 분포가 학습을 하는도중에도 지속적으로 변한다는 의미이다.
+   이는 학습의 불안정성을 초래하는 가장큰 이유중 하나이다. 또한 RL은 하이퍼파라미터에 매우 민감하다 
+   따라서 PPO, A2C 알고리즘을 선정하여 학습의 속도와 안정성을 높이고 RDPG 알고리즘을 선정하여 샘플 효율성 및 수렴성을 높인다.
 
  - ## PPO
    - ![image](https://user-images.githubusercontent.com/60399060/146108886-4383161a-3124-46f5-a5ca-69c498e6d1d9.png)
-   - DeepReinforcementLearninginQuantitative AlgorithmicTrading:AReview 에 따르면 PPO는 타 RL알고리즘 보다 복잡한 환경에서 잘작동한다. 기존 RL의 가장 큰 문제는 최근 폴리시에 일반적으로 의존하는데 이는 observation과 reward등의 트레젝터리 데이터 분포가 학습을 하는도중에도 지속적으로 변한다는 의미이다.
-   이는 불안정성을 초래하는 가장큰 이유중 하나이다. RL은 또한 하이퍼파라미터에 매우 민감하다 
-   이런 문제점이 존재한다면 PPO알고리즘에 사용된 바와 같이 region 을 서치공간에 사용하는 방식으로 완화할수있다. 이는 next batch에서 매우 안좋은 policy를 뽑고 다시는 재사용하지 않는다
+   - DeepReinforcement Learning in Quantitative Algorithmic Trading: A Review 에 따르면 PPO는 타 RL알고리즘 보다 주식시장의 복잡한 환경에서 잘작동한다. 
+     
+     PPO알고리즘에 사용된 바와 같이 region 을 서치공간에 사용하는 방식으로 완화할수있다. 이러한 방식 덕분에 buffer를 사용할수 있고
+     next batch에서 좋지않은 policy를 뽑을 경우 재사용하지 않는다
 
      PPO는 new policy가 old policy 와 크게 다르지않도록 Clipping 하기 때문에 논문에서 안정성이 높고 빠르다는 결과를 보인다. <br/>
      또한 상승구간에서 타 에이전트에 비해 수익률이 잘나오는 편이다. 그러나 하락구간에서 A2C보다 낮은 샤프지수를 보인다.
@@ -79,16 +83,16 @@
  - ## RDPG
    - ![image](https://user-images.githubusercontent.com/60399060/145927678-6fb737cd-989f-4c41-9199-85d22be65266.png)
    - DDPG 알고리즘에 LSTM을 결합한 알고리즘.
-   - actor network에서 tanh 활성화 함수 사용으로 exploration을 더 잘하게된다.
-   - Data 효율성 증가를 위해 Replay buffer 사용, 샘플간 상관관계 감소를 위해 random sampling<br/><br/><br/>
-   - 
+   - actor network에서 tanh 활성화 함수를 사용하여 exploration을 더 잘하게된다.
+   - Data 효율성 증가와 샘플간 상관관계 감소를 위해 Replay buffer 사용. <br/><br/><br/>
+ 
    - ![image](https://user-images.githubusercontent.com/60399060/146115365-355181cf-c4b1-4ff4-8665-d31b2670c287.png)
-   - 연속 행동공간에서 행동의 확률분포를 출력하지 않고 이산적인 값을 출력한다.
-   - DQN,PPO와 같은 이산공간 알고리즘과 다르게 연속행동공간에서 잘 작동하며 이로인해 더 큰 data set에서 트레이딩 할수있다. <br/>
-   - 다른 SOTA 알고리즘에 비해 간단한 경향이 있으며 이러한 단순성 때문에 사용자는 좀더 트레이딩 전략에 초점을 맞출수 있으며 <br/>
+   - 연속 행동공간에서 행동의 확률분포를 출력하지 않고 이산적인 값을 출력한다. (Q-learning method를 가져와서 연속행동공간에서의 off policy 알고리즘으로 활용) <br/>
+   - 다른 SOTA 알고리즘에 비해 간단한 경향이 있으며 이러한 단순성 때문에 사용자는 좀더 트레이딩 전략에 초점을 맞출수 있다. <br/>
 
    - ![image](https://user-images.githubusercontent.com/60399060/146114550-5d2ebba7-4a0a-4824-9ae9-99ab787aaeb3.png)
-   - target critic이 이산 값을 출력하기 때문에 action에 OU프로세스 값을 추가하여 exploration 효과를 추가<br/><br/>
+   - critic 네트워크가 이산 값을 출력하기 때문에 action에 OU프로세스 값을 추가하여 exploration 효과를 추가<br/><br/>
+   - OU process는 과거 노이즈들과 시간적으로 연관된 확률 변수를 생성하는 exploration 기법이다 (시간적 연관성은 노이즈 값이 너무 커지거나 작아지는걸 방지하기 위함)
 
    - ![image](https://user-images.githubusercontent.com/60399060/146114471-6b1b63fa-c5e3-4974-80bd-efe2b5045f6a.png)
    - soft target update로 급격한 네트워크 변화를 방지하여 안정적인 수렴을 돕는다
