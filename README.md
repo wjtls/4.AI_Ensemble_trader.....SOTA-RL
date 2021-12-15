@@ -61,6 +61,7 @@
    PPO는 new policy가 old policy 와 크게 다르지않도록 Clipping 하기 때문에 논문에서 안정성이 높고 빠르다는 결과를 보인다. <br/>
    또한 상승구간에서 타 에이전트에 비해 수익률이 잘나오는 편이다. 그러나 하락구간에서 A2C보다 낮은 샤프지수를 보인다.
  
+ 다. 정책 알고리즘으로서 PPO는 새로운 정책이 기존 정책에서 너무 멀리 바뀌는 것을 피하기 위해 대리목표를 활용하여 샘플 효율성 문제를 해결한다. PPO는 정책 업데이트를 정규화하고 교육 데이터를 재사용할 수 있기 때문에 대리 목표는 PPO의 핵심 기능이다.
 
  - ## RDPG
  - DDPG 알고리즘에 LSTM을 결합한 알고리즘.
@@ -84,28 +85,21 @@
  
  
 ## 결론 (수정 필요 A2C 학습 제대로 안됨)
-![image](https://user-images.githubusercontent.com/60399060/145931851-80c8ce29-193b-4e46-86ed-3f8b0dc65f3e.png)
+
 - kindex SP500 validation set 에서 백테스팅 결과
 - 시장 수익률 :-0.3765702247619629 %
 - Ensemble Agent return : 0.18998384475708008 %
 - Ensemble Agent Alpha : 0.566554069519043 % <br/><br/>
-
-![image](https://user-images.githubusercontent.com/60399060/145932818-45801586-d3c1-4371-9015-f0403e97e256.png)
-![image](https://user-images.githubusercontent.com/60399060/145932970-18f6c856-6a45-45ad-bc29-461cc750470d.png)
-![image](https://user-images.githubusercontent.com/60399060/145933455-8ba2618a-3201-43dc-869f-7d445d98d223.png)
 
 
 - 앙상블 에이전트는 약 100- 200 step의 하락구간에서 주로 A2C와 DDPG 알고리즘으로 거래를 하였고 
 - 200-350 step 까지의 상승구간에서 주로 PPO 알고리즘을 사용하여 거래하였다
 
 ## 한계 및 개선
-- 데이터의 노이즈로 인해 오버피팅 가능성 존재.<br/>
-    - Denoise Auto Encoder(DAE) 방식으로 데이터의 노이즈 제거 가능<br/><br/>
 - State의 정의 (차원의 저주 문제로 인해 1개의 feature만 사용)<br/>
     - 팩터들 사이에서 다중공선성 문제가 생길 수 있으므로 Feature Extraction 방법으로 차원의 저주와 높은 상관계수 문제 해결 예정<br/><br/>
-- RDPG 알고리즘의 하이퍼파라미터 찾기가 타 에이전트에 비해 어려운편.<br/> 
-    - Auto ML 방식으로 개선 예정<br/>
     - continuous action space에서 효과적인 다른 SOTA 에이전트 사용 (TD3,SLAC,SAC,D4PG 등등)<br/><br/>
+    - 
 - 시장은 t시점에서 알파를 찾아도 향후 새로운 알파가 생겨난다. <br/> 
     - 단일 에이전트 보다는 유동적으로 전략을 찾을수 있지만 현 앙상블 에이전트에서도 여전히 전략간 상관계수와 편향이 있다.  <br/> 
     - 더많은 에이전트를 앙상블하거나 MARL(Multi-Agent-Reinforcement-learning) 사용 예정   <br/>
