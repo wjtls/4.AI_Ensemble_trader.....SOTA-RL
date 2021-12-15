@@ -104,9 +104,11 @@
 
 
  - ## A2C
-   - ![image](https://user-images.githubusercontent.com/60399060/146108705-f21ce5d5-5a38-4244-bdfa-cead8adc2bda.png)
-   - Acor와 Critic network 를 사용하며 A(Advantage function)을 사용하여 policy 네트워크의 분산을 줄여준다.
-   - 벨류만 추정하는 대신 크리틱 네트워크로 어드밴티지도 추정한다. 따라서 얼마나 좋은 액션인지 뿐만아니라 얼마나 더 좋아질수 있는지도 고려한다
+   - ![image](https://user-images.githubusercontent.com/60399060/146138922-687b1b5d-5da0-4912-b517-291bc4e84485.png)
+   - actor network는 action을 선택하고 critic network는 Q(s,a) 를 평가 한다. 또한 A(Advantage function)을 사용하여 policy 네트워크의 분산을 줄여준다.
+   - 크리틱 네트워크로 Advantage function을 추정하므로 얼마나 좋은 액션인지 뿐만아니라 얼마나 더 좋아질수 있는지도 고려한다.
+   
+   - ![image](https://user-images.githubusercontent.com/60399060/146139038-3a3b8890-7850-43d4-8e8c-52569167f674.png)
    - A2C는 주식 트레이딩환경에서 안정적이다.
    - 단점으로는 off policy 알고리즘에 비해 샘플효율성이 낮고, 데이터간 상관관계가 높을수 있다.
 
