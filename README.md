@@ -23,7 +23,9 @@
 - PPO 에이전트 (강화학습)
 - RDPG 에이전트 (강화학습)
 - Replay buffer 사용
-- optimize (over fitting 방지를 위한 clip gradient 사용)
+- OU process 사용
+- soft target update 사용
+- optimize 중 over fitting 방지를 위한 clip gradient 사용
 - 에이전트 앙상블 (sharpe ratio 사용)
 
 
@@ -54,6 +56,7 @@
 ## 본론
 
  - ## PPO
+ - ![image](https://user-images.githubusercontent.com/60399060/146108886-4383161a-3124-46f5-a5ca-69c498e6d1d9.png)
  - DeepReinforcementLearninginQuantitative AlgorithmicTrading:AReview 에 따르면 PPO는 타 RL알고리즘 보다 복잡한 환경에서 잘작동한다. 기존 RL의 가장 큰 문제는 최근 폴리시에 일반적으로 의존하는데 이는 observation과 reward등의 트레젝터리 데이터 분포가 학습을 하는도중에도 지속적으로 변한다는 의미이다.
  이는 불안정성을 초래하는 가장큰 이유중 하나이다. RL은 또한 하이퍼파라미터에 매우 민감하다 
  이런 문제점이 존재한다면 PPO알고리즘에 사용된 바와 같이 region 을 서치공간에 사용하는 방식으로 완화할수있다. 이는 next batch에서 매우 안좋은 policy를 뽑고 다시는 재사용하지 않는다
@@ -83,6 +86,7 @@
  
  
  - ## A2C
+ - ![image](https://user-images.githubusercontent.com/60399060/146108705-f21ce5d5-5a38-4244-bdfa-cead8adc2bda.png)
  - Acor와 Critic network 를 사용하며 Advantage function을 사용하여 policy gradient의 분산을 줄여준다.
  - 벨류 펑션만 추정하는 대신 크리틱 네트워크로 어드밴티지 펑션도 추정한다. 따라서 얼마나 좋은 액션인지 뿐만아니라 얼마나 더 좋아질수 있는지도 고려한다 그러므로 폴리시 네트워크 의 높은 분산을 감소시키는 방법은 강력
  - A2C는 스톡 트레이딩환경에서 안정적이다.
