@@ -65,18 +65,19 @@
    따라서 PPO, A2C 알고리즘을 선정하여 학습의 속도와 안정성을 높이고 RDPG 알고리즘을 선정하여 샘플 효율성 및 수렴성을 높인다.
 
  - ## PPO
-   - ![image](https://user-images.githubusercontent.com/60399060/146108886-4383161a-3124-46f5-a5ca-69c498e6d1d9.png)
-   - DeepReinforcement Learning in Quantitative Algorithmic Trading: A Review 에 따르면 PPO는 타 RL알고리즘 보다 주식시장의 복잡한 환경에서 잘작동한다. 
-     
-   - PPO알고리즘에 사용된 바와 같이 region 을 서치공간에 사용하는 방식으로 완화할수있다. 이러한 방식 덕분에 buffer를 사용할수 있고 next batch에서 좋지않은 policy를 뽑을 경우 재사용하지 않는다
-
-   - PPO는 new policy가 old policy 와 크게 다르지않도록 Clipping 하기 때문에 논문에서 안정성이 높고 빠르다는 결과를 보인다. <br/>
+   - Deep Reinforcement Learning in Quantitative Algorithmic Trading: A Review 에 따르면 PPO는 타 RL알고리즘 보다 주식시장의 복잡한 환경에서 잘작동 하므로 선택했다.
+   
+   - ![image](https://user-images.githubusercontent.com/60399060/146135720-9f131c45-c616-4383-bf87-f9235cf7f55f.png)
+   - new policy가 old policy 와 크게 다르지않도록 Clipping 하기 때문에 논문에서 안정성이 높고 빠르다는 결과를 보인다. <br/>
+   
+   - ![image](https://user-images.githubusercontent.com/60399060/146135945-5e1bd0e9-8ef7-49c2-9d41-b2ae8ebb9f25.png)
+   - GAE Advantage를 사용하여 Advantage를 잘추산한다. 이로인해 분산을 더 적절하게 감소 시킬수 있다.
+   - 신뢰 지역(Trust region) 에서 GAE를 구하고 r세타를 연산하는 덕에 buffer를 사용할수 있고 next batch에서 좋지않은 policy를 뽑을 경우 재사용하지 않는다
  
-
-   - 정책 알고리즘으로서 PPO는 새로운 정책이 기존 정책에서 너무 멀리 바뀌는 것을 피하기 위해 대리 목표를 활용하여 샘플 효율성 문제를 해결한다.
- 
-   - PPO는 정책 업데이트를 정규화하고 교육 데이터를 재사용할 수 있기 때문에 대리 목표는 PPO의 핵심 기능이다.따라서 
-   ppo 는 on policy이지만 on policy 의 수렴성과 대리목표 및 buffer 사용으로 off policy의 샘플 효율성을 모두 가진다. 
+   - ![image](https://user-images.githubusercontent.com/60399060/146136194-aa3647e1-29a8-45f4-a21c-6d38884ab353.png)
+   - PPO는 새로운 정책이 기존 정책에서 너무 멀리 바뀌는 것을 피하기 위해 대리 목표를 활용하여 min을 취함으로 샘플 효율성 문제를 해결한다.
+   - PPO는 정책 업데이트를 정규화하고 교육 데이터를 재사용할 수 있기 때문에 대리 목표는 PPO의 핵심 기능이다. 따라서 <br/>
+     ppo 는 on policy이지만 on policy 의 수렴성과 대리목표 및 buffer 사용으로 off policy의 샘플 효율성을 모두 가진다. 
 
  상승구간에서 타 에이전트에 비해 수익률이 잘나오는 편이다. 그러나 하락구간에서 A2C보다 낮은 샤프지수를 보인다.
 
