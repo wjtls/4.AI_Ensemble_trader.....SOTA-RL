@@ -84,31 +84,31 @@
    - ![image](https://user-images.githubusercontent.com/60399060/145927678-6fb737cd-989f-4c41-9199-85d22be65266.png)
    - DDPG 알고리즘에 LSTM을 결합한 알고리즘.
    - actor network에서 tanh 활성화 함수를 사용하여 exploration을 더 잘하게된다.
-   - Data 효율성 증가와 샘플간 상관관계 감소를 위해 Replay buffer 사용. <br/><br/><br/>
+   - Data 효율성 증가와 샘플간 상관관계 감소를 위해 Replay buffer 사용. <br/><br/>
  
    - ![image](https://user-images.githubusercontent.com/60399060/146115365-355181cf-c4b1-4ff4-8665-d31b2670c287.png)
    - 연속 행동공간에서 행동의 확률분포를 출력하지 않고 이산적인 값을 출력한다. (Q-learning method를 가져와서 연속행동공간에서의 off policy 알고리즘으로 활용) <br/>
-   - 다른 SOTA 알고리즘에 비해 간단한 경향이 있으며 이러한 단순성 때문에 사용자는 좀더 트레이딩 전략에 초점을 맞출수 있다. <br/>
+   - 다른 SOTA 알고리즘에 비해 간단한 경향이 있으며 이러한 단순성 때문에 사용자는 좀더 트레이딩 전략에 초점을 맞출수 있다. <br/><br/>
 
    - ![image](https://user-images.githubusercontent.com/60399060/146114550-5d2ebba7-4a0a-4824-9ae9-99ab787aaeb3.png)
-   - critic 네트워크가 이산 값을 출력하기 때문에 action에 OU프로세스 값을 추가하여 exploration 효과를 추가<br/><br/>
    - OU process는 과거 노이즈들과 시간적으로 연관된 확률 변수를 생성하는 exploration 기법이다 (시간적 연관성은 노이즈 값이 너무 커지거나 작아지는걸 방지하기 위함)
+   - critic 네트워크가 이산 값을 출력하기 때문에 action에 OU프로세스 값을 추가하여 exploration 효과를 추가<br/><br/>
 
    - ![image](https://user-images.githubusercontent.com/60399060/146114471-6b1b63fa-c5e3-4974-80bd-efe2b5045f6a.png)
-   - soft target update로 급격한 네트워크 변화를 방지하여 안정적인 수렴을 돕는다
-
+   - soft target update로 급격한 네트워크 변화를 방지하여 안정적인 수렴을 돕는다<br/><br/>
 
    - 세부 
      Deterministic 하게 바꾸는 과정에서 r+감마*Q(s,u) 사용으로 환경만 영향을 미치므로 과거 action에 영향을 받지않는다
-     따라서 off policy 방식으로 학습을 하며 Replay buffer를 사용할수 있게된다.
+     따라서 off policy 방식으로 학습을 하며 Replay buffer를 사용할수 있게된다.<br/><br/>
+
 
 
  - ## A2C
    - ![image](https://user-images.githubusercontent.com/60399060/146108705-f21ce5d5-5a38-4244-bdfa-cead8adc2bda.png)
-   - Acor와 Critic network 를 사용하며 Advantage function을 사용하여 policy gradient의 분산을 줄여준다.
-   - 벨류 펑션만 추정하는 대신 크리틱 네트워크로 어드밴티지 펑션도 추정한다. 따라서 얼마나 좋은 액션인지 뿐만아니라 얼마나 더 좋아질수 있는지도 고려한다 그러므로 폴리시 네트워크 의 높은 분산을 감소시키는 방법은 강력
-   - A2C는 스톡 트레이딩환경에서 안정적이다.
-   - 그러나 샘플효율성 , 데이터간 상관관계가 off policy 방식에 비해 높을수 있다.
+   - Acor와 Critic network 를 사용하며 A(Advantage function)을 사용하여 policy 네트워크의 분산을 줄여준다.
+   - 벨류만 추정하는 대신 크리틱 네트워크로 어드밴티지도 추정한다. 따라서 얼마나 좋은 액션인지 뿐만아니라 얼마나 더 좋아질수 있는지도 고려한다
+   - A2C는 주식 트레이딩환경에서 안정적이다.
+   - 단점으로는 off policy 알고리즘에 비해 샘플효율성이 낮고, 데이터간 상관관계가 높을수 있다.
 
 
 
