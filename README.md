@@ -77,7 +77,7 @@
    - ![image](https://user-images.githubusercontent.com/60399060/146136194-aa3647e1-29a8-45f4-a21c-6d38884ab353.png)
    - PPO는 새로운 정책이 기존 정책에서 너무 멀리 바뀌는 것을 피하기 위해 대리 목표를 활용하여 min을 취함으로 샘플 효율성 문제를 해결한다.
    - PPO는 정책 업데이트를 정규화하고 교육 데이터를 재사용할 수 있기 때문에 대리 목표는 PPO의 핵심 기능이다. 따라서 
-     ppo 는 on policy이지만 on policy 의 수렴성과 대리목표 및 buffer 사용으로 off policy의 샘플 효율성을 모두 가진다. 
+     ppo 는 on policy이지만 on policy 의 수렴성과 대리목표(Surrogate loss) 사용으로 off policy의 장점인 샘플 효율성을 가지게 된다.
    - 상승구간에서 타 에이전트에 비해 수익률이 잘나오는 편이다. 그러나 하락구간에서 A2C보다 낮은 샤프지수를 보인다.
 
  - ## RDPG
