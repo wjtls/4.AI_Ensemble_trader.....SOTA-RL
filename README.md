@@ -138,8 +138,8 @@
 
 ## 문제점 및 개선방안
   - MDP(Markov decision process) 정의 문제
-      - 현 프로젝트에서는 state= [price] 로 정의. 이는 환경을 충분히 설명하지 못하며 오버피팅 가능성이 높다. 따라서 여러 팩터를 사용할 필요성이 있다.
-      - 여러 팩터들 사이에서 다중공선성 문제가 생길 수 있으므로 Feature Extraction 방법으로 차원의 저주와 높은 상관계수 문제 해결 가능<br/><br/>
+      - 현 프로젝트에서는 state= [price] 로 정의. 이는 노이즈가 심하고 비정상성을 보이는 데이터 이므로 오버피팅 가능성이 높다. 따라서 여러 팩터를 사용할 필요성이 있다.
+      - 여러 팩터를 사용하면 팩터들 사이에서 다중공선성 문제가 생길 수 있으므로 Feature Extraction 방법으로 차원의 저주와 높은 상관계수 문제 해결 가능<br/><br/>
 
   - RDPG 알고리즘의 하이퍼 파라미터 튜닝 문제 
       - RDPG는 다른 RL알고리즘보다 파라미터 튜닝이 어려운 편이다.
@@ -147,11 +147,12 @@
       - continuous action space에서 효과적인 다른 SOTA 에이전트 사용 (TD3,SLAC,SAC,D4PG 등등)<br/><br/>
 
   - A2C 알고리즘의 낮은 샘플 효율성
+      - on policy(behavior policy 와 target policy가 같음.) 학습을 하며 과거 샘플을 재사용 할수 없기 때문에 샘플 효율성이 낮다.
       - Replay buffer 를 사용하는 ACER(Actor Critic with Experience replay buffer) 를 사용할수 있다.<br/><br/>
 
   - 시장은 t시점에서 알파를 찾아도 향후 새로운 알파가 생겨난다.
       - 단일 에이전트 보다는 유동적으로 전략을 찾을수 있지만 현 앙상블 에이전트에서도 여전히 전략간 상관계수와 편향이 있다.
-      - 더많은 에이전트를 앙상블하거나 MARL(Multi-Agent-Reinforcement-learning) 사용 
+      - 따라서 더많은 에이전트를 앙상블하거나 MARL(Multi-Agent-Reinforcement-learning) 사용 
       - 각 에이전트가 알고리즘 자체를 스스로 개선하도록 하여 여러 에이전트들의 전략간 상관계수와 편향을 낮출 수 있다.
 
 
