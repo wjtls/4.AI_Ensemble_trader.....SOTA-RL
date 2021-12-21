@@ -15,7 +15,7 @@
   이 프로젝트를 완료하게 된다면 A2C,RDPG,PPO 만 사용하는 것이 아니라 여러 SOTA 에이전트 사용 및 더 많은 팩터를 사용하는 트레이더를 구현할수 있을것이라 생각하여 진행
   
   
-<br/><br/><br/><br/><br/>
+  <br/><br/><br/><br/>
 
 
 ## 기능
@@ -33,7 +33,7 @@
 
 
 
-  <br/><br/><br/><br/><br/>
+  <br/><br/><br/><br/>
 
 
 ## 요약
@@ -56,7 +56,7 @@
 
 
 
-  <br/><br/><br/><br/><br/>
+  <br/><br/><br/><br/>
 
 
 ## 본론
@@ -130,10 +130,8 @@
 
 
 
-  <br/><br/><br/><br/><br/>
-  
-  
-  
+  <br/><br/><br/><br/>
+ 
   
 
 ## 문제점 및 개선방안
@@ -150,11 +148,24 @@
       - on policy(behavior policy 와 target policy가 같음.) 학습을 하며 과거 샘플을 재사용 할수 없기 때문에 샘플 효율성이 낮다.
       - Replay buffer 를 사용하는 ACER(Actor Critic with Experience replay buffer) 를 사용할수 있다.<br/><br/>
 
+
   - 시장은 t시점에서 알파를 찾아도 향후 새로운 알파가 생겨난다.
       - 단일 에이전트 보다는 유동적으로 전략을 찾을수 있지만 현 앙상블 에이전트에서도 여전히 전략간 상관계수와 편향이 있다.
       - 따라서 더많은 에이전트를 앙상블하거나 MARL(Multi-Agent-Reinforcement-learning) 사용 
       - 각 에이전트가 알고리즘 자체를 스스로 개선하도록 하여 여러 에이전트들의 전략간 상관계수와 편향을 낮출 수 있다.
 
+
+
+  <br/><br/><br/><br/>
+  
+## 참고 
+  -  LSTM-DDPG for Trading with Variable Positions [RDPG 논문]
+  -  Learning to Trade with Deep Actor Critic Methods [A2C 논문]
+  -  CONTINUOUS CONTROL WITH DEEP REINFORCEMENT LEARNING [DDPG 논문]
+  -  SAMPLE EFFICIENT ACTOR-CRITIC WITH EXPERIENCE REPLAY [ACER 논문]
+  -  Proximal Policy Optimization Algorithms [PPO 논문]
+  -  Deep Reinforcement Learning for Automated Stock Trading: An Ensemble Strategy [강화학습의 앙상블 논문] 
+ 
 
 
 
