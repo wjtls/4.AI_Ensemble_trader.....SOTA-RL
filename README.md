@@ -9,11 +9,16 @@
 
     [![주피터 Badge](https://img.shields.io/badge/jupyter-F37626?style=flat-square&logo=jupyter&logoColor=white&link=mailto:wjtls01@naver.com)](mailto:wjtls01@naver.com)
 
-- 목표: 앙상블을 사용함으로써 단일에이전트의 휴리스틱한 전략보다 하락장과 상승장에서 안정적으로 트레이딩
+- 목표: 앙상블을 사용함으로써 인간의 퀀트 전략 및 단일 강화학습 에이전트보다 안정적으로 트레이딩
 
 - 구현 이유: Deep Reinforcement Learning for Automated stock Trading :An Ensemble Strategy 라는 논문을 보게 됐고,
   이 프로젝트를 완료하게 된다면 A2C,RDPG,PPO 만 사용하는 것이 아니라 여러 SOTA 에이전트 사용 및 더 많은 팩터를 사용하는 트레이더를 구현할수 있을것이라 생각하여 진행
   
+- DRL(Deep Reinforcement learning) 사용 이유
+    - 1. 주식 거래 목표인 수익률 극대화 가능 : 강화학습 에이전트는 행동,전략에 대한 보상을 극대화하여 이러한 최적화 문제 해결
+    - 2. 주식 거래 의사 결정 과정을 모델링 가능 : MDP(Markov Decision process)를 정의
+    - 3. 다차원 데이터 처리 가능 : 극도로 큰 행동 공간 및 상태 공간을 가지는 다차원 데이터도 효과적으로 계산 가능
+    - 4. 인간을 능가 할 수 있다.
   
   <br/><br/><br/><br/>
 
