@@ -114,13 +114,10 @@
    - 크리틱 네트워크로 Advantage function을 추정하므로 얼마나 좋은 액션인지 뿐만아니라 얼마나 더 좋아질수 있는지도 고려한다.
    
    - ![image](https://user-images.githubusercontent.com/60399060/146139038-3a3b8890-7850-43d4-8e8c-52569167f674.png)
-   - critic loss 는 actor loss
    - A2C는 주식 트레이딩환경에서 안정적이다.
-   - 단점으로는 off policy 알고리즘에 비해 샘플효율성이 낮고, 데이터간 상관관계가 높을수 있다.
+   - 단점으로는 off policy 알고리즘에 비해 샘플 효율성이 낮고, 샘플간 상관관계가 높을수 있다.
 
-
-
-  <br/><br/><br/><br/><br/>
+  <br/><br/><br/><br/>
 
  
 ## 결론 (수정 필요 A2C 학습 제대로 안됨)
