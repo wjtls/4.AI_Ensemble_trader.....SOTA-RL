@@ -42,13 +42,11 @@
 
 
 ## 요약
-  - ![image](https://user-images.githubusercontent.com/60399060/145546012-46aebe4a-7ee4-4b54-8ff7-3de0866f640c.png)
-
-  - Train the three algorithms that take actions in the environment and ensemble the three agents together using the Sharpe ratio.
-  - 3개의 에이전트를 순차적으로으로 각각 학습하여 가중치를 저장(GPU 사양이 된다면 멀티프로세싱 사용).
-  - 기간을 설정하고 구간별로 rolling 하여 샤프지수 계산.
-  - 매스탭마다 가장 높은 샤프지수를 가진 에이전트를 선정하여 해당 에이전트로 1스탭 트레이딩.<br/><br/><br/><br/>
-
+  - MDP(Markov Decision process) 정의 <br/>
+    마르코브 의사 결정 과정은 리워드, 상태, 행동, 벨류 등을 정의하는 과정이다. <br/>
+    이는 트레이딩 환경에서 뿐만 아니라 강화학습을 수행 하는 모든 환경에서 가장 중요한 문제이다. <br/>
+    예를 들면 인간이 주식을 할 때 목표(수익률)을 설정하고 매매 행동, 지표, 팩터를 선택하는 과정이라 볼 수 있다. <br/> <br/>
+    
   - <img src="https://user-images.githubusercontent.com/60399060/145567671-98bd6c89-daac-4c6b-b45a-f1b47df612d3.png" width="710px" height="820px" title="px(픽셀) 크기 설정" alt="RubberDuck"></img><br/>
 
   - Discrete action space (PPO,A2C) 에서 action = [0=매도 ,1=관망 ,2= 매수]로 설정하였고, <br/> 
@@ -58,6 +56,15 @@
     next step에서 주가가 하락하는 경우 현재의 step 에서 매도 하려는 성향을 가진다.
     <br/>   
   - state 는 종가 하나만 사용.(PCA나 양질의 데이터 생성 등으로 차원의저주 문제를 완화한다면 가격 데이터 이외에 여러 지표를 사용가능)
+
+
+  - ![image](https://user-images.githubusercontent.com/60399060/145546012-46aebe4a-7ee4-4b54-8ff7-3de0866f640c.png)
+
+  - Train the three algorithms that take actions in the environment and ensemble the three agents together using the Sharpe ratio.
+  - 3개의 에이전트를 순차적으로으로 각각 학습하여 가중치를 저장(GPU 사양이 된다면 멀티프로세싱 사용).
+  - 기간을 설정하고 구간별로 rolling 하여 샤프지수 계산.
+  - 매스탭마다 가장 높은 샤프지수를 가진 에이전트를 선정하여 해당 에이전트로 1스탭 트레이딩.<br/><br/><br/><br/>
+
 
 
 
