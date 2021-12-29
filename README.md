@@ -76,7 +76,7 @@
    이는 학습의 불안정성을 초래하는 가장큰 이유중 하나이다. 또한 RL은 하이퍼파라미터에 매우 민감하다 
    따라서 PPO, A2C 알고리즘을 선정하여 학습의 속도와 안정성을 높이고 RDPG 알고리즘을 선정하여 샘플 효율성 및 수렴성을 높인다.
 
- - ## PPO
+ - ## PPO 알고리즘
    - Deep Reinforcement Learning in Quantitative Algorithmic Trading: A Review 에 따르면 PPO는 타 RL알고리즘 보다 주식시장의 복잡한 환경에서 잘작동 하므로 선택했다.
    
    - ![image](https://user-images.githubusercontent.com/60399060/146135720-9f131c45-c616-4383-bf87-f9235cf7f55f.png)
@@ -92,7 +92,7 @@
      ppo 는 on policy이지만 on policy 의 수렴성과 대리목표(Surrogate loss) 사용으로 off policy의 장점인 샘플 효율성을 가지게 된다.
    - 상승구간에서 타 에이전트에 비해 수익률이 잘나오는 편이다. 그러나 하락구간에서 A2C보다 낮은 샤프지수를 보인다.
 
- - ## RDPG
+ - ## RDPG 알고리즘
    - ![image](https://user-images.githubusercontent.com/60399060/145927678-6fb737cd-989f-4c41-9199-85d22be65266.png)
    - DDPG 알고리즘에 LSTM을 결합한 알고리즘.
    - actor network에서 tanh 활성화 함수를 사용하여 exploration을 더 잘하게된다.
@@ -115,7 +115,7 @@
 
 
 
- - ## A2C
+ - ## A2C 알고리즘
    - ![image](https://user-images.githubusercontent.com/60399060/146138922-687b1b5d-5da0-4912-b517-291bc4e84485.png)
    - actor network는 action을 선택하고 critic network는 Q(s,a) 를 평가 한다. 또한 A(Advantage function)을 사용하여 policy 네트워크의 분산을 줄여준다.
    - 크리틱 네트워크로 Advantage function을 추정하므로 얼마나 좋은 액션인지 뿐만아니라 얼마나 더 좋아질수 있는지도 고려한다.
