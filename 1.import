@@ -1,4 +1,4 @@
-#torch 
+#파이토치 
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -30,3 +30,17 @@ import time
 import copy
 from shholiday import holiday2020 as hd
 from datetime import  datetime
+
+
+
+
+#크롤링
+import requests
+import xmltodict
+import json
+from pandas import json_normalize
+
+import pandas as pd
+import requests
+from bs4 import BeautifulSoup
+import FinanceDataReader as fd
