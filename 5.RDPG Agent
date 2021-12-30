@@ -135,7 +135,6 @@ class DDPG(nn.Module,Env): #continuous action space agent
         unit1=0
         unit2=0
         
-        
         if self.Ensemble_strategy==True: #백테스팅 중이거나 앙상블중인경우
             mu_action=mu
             mu_action_clip=torch.clip(mu_action,-1,1)
@@ -268,6 +267,7 @@ class DDPG(nn.Module,Env): #continuous action space agent
         return mu_next_state,next_state,state_data,state_LSTM,action_data,reward_data
         
         
+        
     def update_data(self,action,state,reward,next_step_idx,step): #배치에 데이터 업데이트
         self.action_data.append(action)
         self.reward_data.append(reward)
@@ -275,6 +275,8 @@ class DDPG(nn.Module,Env): #continuous action space agent
         self.next_state_data.append(self.scale_price_data[next_step_idx])
         self.next_step_idx.append(next_step_idx)
         self.step_data.append(step)
+        
+        
         
     def minibatch_reset(self):#배치 리셋 
         self.action_data=[]
@@ -325,12 +327,13 @@ class DDPG(nn.Module,Env): #continuous action space agent
                 target_mu.save()
                 value_net.save()
                 target_value.save()
-                
+            print(mu)
             print(step_+1 ,'/' ,epoch,':에포크',self.PV,':마지막 PV',self.cash,':현금',self.stock,':주식(코인)수', self.Cumulative_reward.item(),'rewaRd')
         
             
     def back_test(self,train_val_test): #백테스팅
         self.reset() #리셋
+        self.Ensemble_strategy=True
         
         #train or val or test셋 호출
         if train_val_test=='train':
@@ -373,7 +376,7 @@ class DDPG(nn.Module,Env): #continuous action space agent
             self.theta=0 
             action,unit=self.decide_action(mu) #현 스테이트에서 액션 선택
             action_,reward,step,next_step_idx=self.continuous_step(action,unit,step,self) #액션 및 PV업데이트
-            
+            print(action_,'액션')
             #데이터 저장
             PV_data.append(self.PV)
             if step%50==0:
@@ -395,6 +398,7 @@ class DDPG(nn.Module,Env): #continuous action space agent
         
         return PV_data
     
+    
     def Ensemble_step(self,data,close_data,cash,stock,PV,step): #앙상블 스탭
         self.reset() #리셋
         
@@ -408,7 +412,7 @@ class DDPG(nn.Module,Env): #continuous action space agent
             
         #데이터 가공
         self.LSTM_input,idx_=self.LSTM_observation(self.scale_input,self.window)          #LSTM에 들어갈형태의 인풋
-        self.LSTM_input_size=self.LSTM_input.size()[2]                                
+        self.LSTM_input_size=self.LSTM_input.size()[2]                                #LSTM인풋디멘션( LSTM의 인풋형태: 윈도우사이즈,총시퀀스길이,디멘션)
         
         #네트워크 호출
         mu_net=DDPG_actor(self.device,self.window) 
