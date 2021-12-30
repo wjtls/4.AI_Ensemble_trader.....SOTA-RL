@@ -128,16 +128,48 @@
 
  
 ## 결론 
-  - 앙상블의 효과를 보기 위한 프로젝트 이므로 사용 지표는 가격 데이터 하나만 사용하고 train set에서 오버피팅 시킨 결과로 앙상블을 실행 시켰다.
+  -  ## 앙상블 이전 각 에이전트 학습<br/>
+
+
+  - ** 앙상블의 효과를 확인 하기 위해 train set 에서 오버 피팅 시킨 에이전트를 사용 **
+  - ** (과적합된 에이전트로도 유의미한 결과를 낼수있는지 확인하기 위함) **
+ <br/><br/>
+  - ![image](https://user-images.githubusercontent.com/60399060/147758677-6f82ea74-4610-41e1-9294-dcd4c4c49e85.png)
+  -(Train data set 의 그래프)
+  -학습 데이터 셋의 시장 수익률 : 17.9672% 
   
-  - kindex SP500 validation set 에서 백테스팅 결과
-  - 시장 수익률 :-0.3765702247619629 %
-  - Ensemble Agent return : 0.18998384475708008 %
-  - Ensemble Agent Alpha : 0.566554069519043 % <br/><br/>
+ <br/><br/>
+  
+  - ![image](https://user-images.githubusercontent.com/60399060/147758732-c6fc8391-c796-4fdf-abad-cb504544f1b6.png)
+  - 주황 그래프: Train set에서 학습시킨 A2C agent의 포트폴리오 가치(PV) (61.19% 수익)
+  - 파랑 그래프: Train set에서 학습시칸 PPO agent의 포트폴리오 가치 (52.76% 수익)
+  - 초록 그래프: Train set에서 학습시킨 RDPG agent의 포트폴리오 가치 (31.34% 수익)
+  - 특이사항 : 이들은 모두 오버피팅 시키기 위해 가격 데이터 하나만으로 학습
+<br/><br/>
 
-  - 앙상블 에이전트는 약 100- 200 step의 하락구간에서 주로 A2C와 DDPG 알고리즘으로 거래를 하였고 
-  - 200-350 step 까지의 상승구간에서 주로 PPO 알고리즘을 사용하여 거래하였다
+  - ![image](https://user-images.githubusercontent.com/60399060/147759207-585757d8-14f5-4dd6-a31b-354ca86d0c67.png)
+  - 검증 데이터 셋(70일)의 시장수익률: (8.12%)
+  - 주황 그래프: Validation set에서 트레이딩 이후 A2C agent의 포트폴리오 가치  (6.67 % 수익)
+  - 파랑 그래프: Validation set에서 트레이딩 이후 PPO agent의 포트폴리오 가치  (7.73% 수익)
+  - 초록 그래프: Validation set에서 트레이딩 이후 RDPG agent의 포트폴리오 가치 (0% 수익)
+  - 특이사항 : A2C 에이전트는 고점에서 매매를 하지않고 안정성을 추구했으며 PPO 에이전트는 공격적인 매매방식을,<br/>
+              RDPG는 매매하지 않는 행동을 선택했다.
+<br/><br/>  
+  -  ## 앙상블 결과 <br/>
+  -  ![image](https://user-images.githubusercontent.com/60399060/147761827-5294e01b-219d-4460-811c-a06c091d346a.png)
+  -  앙상블 에이전트 수익률 : 9.46 %
+  -  앙상블 에이전트 알파 수익률 : 1.33 %
+  -  시장 수익률 : 8.12
+  -  앙상블 에이전트는 단일 SOTA 에이전트들의 단점을 배제하고 장점이 반영 됐다. 
+  -  (A2C의 안정성과 PPO의 수익률을 반영, RDPG의 매우 보수적인 매매방식은 거의 반영하지 않았다)
+<br/><br/>  
+  - 에이전트 선정 내역
+  - ![image](https://user-images.githubusercontent.com/60399060/147762049-98bfbf1d-3c60-4905-aa9e-ea3ea876cbc8.png)
+  - ![image](https://user-images.githubusercontent.com/60399060/147762175-bf62cc29-7bc2-4b06-947d-e11cd8811783.png)
+  - 하락장 및 횡보구간(약40 ~ 60스탭) 에서 A2C 에이전트가 주로 선정되어 안정적인 트레이딩 전략을 채택했다.
+  - 상승장 (0~40스탭,60~65스탭 ) 에서 PPO 에이전트가 주로 선정되어 수익률을 극대화 하는 결과를 보였다.
 
+              
 
 
   <br/><br/><br/><br/>
@@ -157,7 +189,11 @@
   - A2C 알고리즘의 낮은 샘플 효율성
       - on policy(behavior policy 와 target policy가 같음.) 학습을 하며 과거 샘플을 재사용 할수 없기 때문에 샘플 효율성이 낮다.
       - Replay buffer 를 사용하는 ACER(Actor Critic with Experience replay buffer) 를 사용할수 있다.<br/><br/>
-
+  
+  - 강화학습 에이전트들의 민감한 튜닝 문제
+      - 데이터셋의 길이, 분포 , 표준편차 등이 조금만 바뀌어도 하이퍼 파라미터가 수정 돼야한다.
+      - 앙상블을 진행 할 경우 더많은 하이퍼 파라미터들이 추가되는데, 학습 할때마다 이들을 튜닝 해야 한다.
+      - Auto ML 방식을 사용하여 하이퍼 파라미터로 인한 과소,과대 적합 문제를 어느정도 완화
 
   - 시장은 t시점에서 알파를 찾아도 향후 새로운 알파가 생겨난다.
       - 단일 에이전트 보다는 유동적으로 전략을 찾을수 있지만 현 앙상블 에이전트에서도 여전히 전략간 상관계수와 편향이 있다.
