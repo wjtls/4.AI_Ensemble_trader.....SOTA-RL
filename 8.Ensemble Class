@@ -48,7 +48,7 @@ class Ensemble(Env):
         return qp
     
     
-    def RF(self,price_data):  #risk free rate 무위험수익(금리 or 베타값 사용)
+    def RF(self,price_data):  #risk free rate 안정수익(기존 인덱스 수익)
         rf=(((price_data[-1]/price_data[0])-1)*100)
         return rf
     
@@ -163,14 +163,14 @@ class Ensemble(Env):
         PV=[PV1,PV2,PV3]                                                 #에이전트의 PV데이터
         self.cul_SR(agent1,agent2,agent3,period,PV)           #각 에이전트 샤프지수 계산
         
-        
         ##데이터 호출
         train_data,val_data,test_data,ori_close=self.input_create('day', #minute:분봉(코인)
                                                  ratio,   #ratio는 데이터셋 비율을 리스트로 넣음
                                                 500) #호출할 데이터수(코인)
                                                      
         price_data=ori_close[1][period:] #val set 호출  #샤프지수데이터 rolling 했기때문에 period-1 인덱스 부터 백테스팅 시작
-        price_data=price_data[agent1.window:] #LSTM window 고려, Agent마다 window size 상이
+        price_data=price_data[agent1.window:] #LSTM window size 고려
+        
         PV_data=[]
         
         ##에이전트 리셋
@@ -181,6 +181,7 @@ class Ensemble(Env):
         for idx_,price in enumerate(price_data):                           #앙상블 에이전트 백테스팅
             
             Agent=self.max_sharpe(agent1,agent2,agent3,idx_)               #에이전트 선정
+            
             self.Agent_update(Agent,self.Agent_cash,self.Agent_stock,self.Agent_PV,price) #개별 에이전트 상태 업데이트
             self.Agent_cash,self.Agent_stock,self.Agent_PV=Agent.Ensemble_step(val_data,price_data,Agent.cash,Agent.stock,Agent.PV,idx_)   #1step 진행
             
@@ -198,13 +199,14 @@ class Ensemble(Env):
         Market_return=(((price_data[-1]/price_data[0])-1)*100).item()  #시장수익률
         agent_return=float(((PV_data[-1]/PV_data[0])-1)*100)  #에이전트 수익률
         Alpha= agent_return-Market_return                              #알파
-        beta= agent_return/Market_return #베타
+        beta=agent_return/Market_return  #베타
         
         print(Market_return,'Market rate of return.')
         print(agent_return,'Ensemble Agent return')
         print(Alpha,'Ensemble Agent Alpha')
         print(beta,'Ensemble Agent Beta')
         
-        
         return PV_data
+    
+    
     
