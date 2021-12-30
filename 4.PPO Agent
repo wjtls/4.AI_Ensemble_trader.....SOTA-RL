@@ -1,5 +1,6 @@
 class PPO(nn.Module,Env):
     
+    #https://github.com/nikhilbarhate99/PPO-PyTorch/blob/master/PPO.py 참고 코드 
     
     def __init__(self,window,                          #LSTM 윈도우 사이즈
                        cash,                            #초기 보유현금
@@ -52,9 +53,9 @@ class PPO(nn.Module,Env):
         self.stock=0 #가진 주식수
         self.gamma=0.99
         self.Cumulative_reward=0 #누적 리워드
-        self.old_prob=0#old prob 저장
-        self.total_loss=0 # actor_loss+critic_loss 
-        self.Ensemble_strategy=False #앙상블 진행중일경우 True
+        self.old_prob=0          #old prob 저장
+        self.total_loss=0        # actor_loss+critic_loss 
+        self.Ensemble_strategy=False    #앙상블 진행중일경우 True
         
         self.Advantage_hat=[]
         self.Advantage=0
@@ -74,11 +75,11 @@ class PPO(nn.Module,Env):
         
         
     def reset(self):
-        self.cash=cash  #가진 현금
-        self.cost=cost #수수료 퍼센트
-        self.PV=0    #포트폴리오 벨류 저장
+        self.cash=cash         #가진 현금
+        self.cost=cost         #수수료 퍼센트
+        self.PV=0              #포트폴리오 벨류 저장
         self.past_PV=self.cash #이전 포트폴리오 벨류 (초기는 현금과같음))
-        self.stock=0 #가진 주식수
+        self.stock=0           #가진 주식수
         self.step_data=[]
         self.gamma=0.99
         self.Cumulative_reward=0 #누적 리워드
@@ -101,10 +102,9 @@ class PPO(nn.Module,Env):
         action_s=Categorical(policy1)
         action=action_s.sample() #매도시 최소 1주 매도
         
-        
         if self.Ensemble_strategy==True: #백테스팅 중이거나 앙상블중인경우
             action=torch.argmax(policy1)
-        
+            
         if action==0:  #매도
             if self.coin_or_stock=='coin':
                 unit0=policy1[0]*self.stock
@@ -136,7 +136,7 @@ class PPO(nn.Module,Env):
         value=value_net(self.LSTM_input) 
         policy=F.softmax(prob)
 
-        total_reward=torch.tensor(self.reward_data,dtype=self.LSTM_input.dtype).to(self.LSTM_input.device)
+        total_reward=torch.tensor(self.reward_data,dtype=self.LSTM_input.dtype).to(self.LSTM_input.device) #텐서 새로만들면 항상 device설정해줘야함
         total_step=self.step_data
         total_next=self.next_step
         
@@ -223,7 +223,8 @@ class PPO(nn.Module,Env):
 
                 policy_net.save()
                 value_net.save()
-            
+                
+            print(policy[torch.argmax(self.price_data)],'맥슾리시',policy[torch.argmin(self.price_data)],'민')  
             print('학습중',_+1,'/',epoch,'진행','리워드',self.Cumulative_reward.item(),'PV',self.PV.item(),'토탈로스',self.total_loss.item())
 
         plt.plot(reward_data)
@@ -240,6 +241,7 @@ class PPO(nn.Module,Env):
             
     def back_test(self,train_val_test): #백테스팅
         self.reset() #리셋
+        self.Ensemble_strategy=True
         
         #train or val or test셋 호출
         if train_val_test=='train':
@@ -257,7 +259,7 @@ class PPO(nn.Module,Env):
         
         #데이터 가공
         self.LSTM_input,idx_=self.LSTM_observation(self.scale_input,self.window)          #LSTM에 들어갈형태의 인풋
-        self.LSTM_input_size=self.LSTM_input.size()[2]                               
+        self.LSTM_input_size=self.LSTM_input.size()[2]                                #LSTM인풋디멘션( LSTM의 인풋형태: 윈도우사이즈,총시퀀스길이,디멘션)
         
             
         #네트워크 호출
@@ -286,8 +288,9 @@ class PPO(nn.Module,Env):
             
         #시각화
         print('PPO Agent 백테스팅 완료')
+        print(policy,'폴리시')
         
-        if self.Ensemble_strategy===False: #앙상블중에는 출력하지 않음
+        if self.Ensemble_strategy==False: #앙상블중에는 출력하지 않음
             fig,ax=plt.subplots(2,1,figsize=(10,9))
             ax[0].set_ylabel('Agent PV')
             ax[0].plot(PV_data)
@@ -295,13 +298,13 @@ class PPO(nn.Module,Env):
             ax[1].set_ylabel('price')
             ax[1].plot(self.price_data)
         
-        print((((self.price_data[-1]/self.price_data[0])-1)*100).item(),':Market rate of return')
+        print((((self.price_data[-1]/self.price_data[0])-1)*100).item(),':Market rate of return.')
         print(float(((PV_data[-1]/PV_data[0])-1)*100),':Agent return')
         
         return PV_data
     
     
-    def Ensemble_step(self,data,close_data,cash,stock,PV,step): #앙상블시 스탭
+    def Ensemble_step(self,data,close_data,cash,stock,PV,step): #앙상블 스탭
         self.reset() #리셋
         
         #앙상블 에이전트의 PortFolio 업데이트
@@ -314,7 +317,7 @@ class PPO(nn.Module,Env):
             
         #데이터 가공
         self.LSTM_input,idx_=self.LSTM_observation(self.scale_input,self.window)          #LSTM에 들어갈형태의 인풋
-        self.LSTM_input_size=self.LSTM_input.size()[2]                               
+        self.LSTM_input_size=self.LSTM_input.size()[2]                                #LSTM인풋디멘션( LSTM의 인풋형태: 윈도우사이즈,총시퀀스길이,디멘션)
         
             
         #네트워크 호출
@@ -334,4 +337,5 @@ class PPO(nn.Module,Env):
         return self.cash,self.stock,self.PV
         
 
+    
     
