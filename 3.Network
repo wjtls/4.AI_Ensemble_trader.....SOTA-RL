@@ -1,4 +1,5 @@
-#Network classes
+#네트워크 클래스들
+
 
 class A2C_actor(nn.Module):
    
@@ -15,7 +16,7 @@ class A2C_actor(nn.Module):
                                    nn.Linear(32,3)
                                   )
                                    
-        self.optimizer=optim.Adam(self.parameters(),lr=2e-4,eps=1e-10)
+        self.optimizer=optim.Adam(self.parameters(),lr=5e-5,eps=1e-10)
         self.to(device)
         
                                    
@@ -46,7 +47,7 @@ class A2C_critic(nn.Module):
                                    nn.Linear(32,1)
                                   )
                                    
-        self.optimizer=optim.Adam(self.parameters(),lr=2e-4,eps=1e-10)
+        self.optimizer=optim.Adam(self.parameters(),lr=5e-5,eps=1e-10)
         self.to(device)
         
         self.check_point=os.path.join('A2C_critic_weight')  #세이브포인트
@@ -81,7 +82,7 @@ class PPO_critic(nn.Module):
                                   nn.ReLU(),
                                  nn.Linear(32,1))
         
-        self.optimizer= optim.Adam(self.parameters(),lr=3e-3,eps=1e-10)
+        self.optimizer= optim.Adam(self.parameters(),lr=2e-5,eps=1e-10)
         self.check_point= os.path.join('PPO_critic_weight')
         self.to(device)
     
@@ -110,7 +111,7 @@ class PPO_actor(nn.Module):
                                   nn.ReLU(),
                                  nn.Linear(32,3))
         
-        self.optimizer= optim.Adam(self.parameters(),lr=3e-3,eps=1e-10)
+        self.optimizer= optim.Adam(self.parameters(),lr=2e-5,eps=1e-10)
         self.check_point= os.path.join('PPO_actor_weight')
         self.to(device)
     
@@ -138,7 +139,7 @@ class DDPG_actor(nn.Module):    #mu net
         self.fc1=nn.Linear(self.hidden_size*2,self.hidden_size)
         self.actor=nn.Linear(self.hidden_size,1)
         
-        self.optimizer= optim.Adam(self.parameters(),lr=5e-6,eps=1e-10)
+        self.optimizer= optim.Adam(self.parameters(),lr=9e-6,eps=1e-10)
         self.check_point= os.path.join('DDPG_actor_weight')
         self.device=device
         self.to(device)
@@ -170,13 +171,13 @@ class DDPG_critic(nn.Module):
         self.action=nn.Linear(self.action_dim,50)
         self.state=nn.Linear(self.state_dim,50)
         self.fc1=nn.Linear(100,200)
-        self.fc2=nn.Linear(200,50)
-        self.critic=nn.Linear(50,1)
+        self.fc2=nn.Linear(200,100)
+        self.critic=nn.Linear(100,1)
         
         
         self.batch=nn.BatchNorm1d(1)
         
-        self.optimizer= optim.Adam(self.parameters(),lr=1e-5,eps=1e-10)
+        self.optimizer= optim.Adam(self.parameters(),lr=9e-5,eps=1e-10)
         self.check_point= os.path.join('DDPG_critic_weight')
         self.device=device
         self.to(device)
@@ -202,4 +203,3 @@ class DDPG_critic(nn.Module):
     def save(self):
         torch.save(self.state_dict(),self.check_point)
      
-    
