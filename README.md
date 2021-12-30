@@ -135,8 +135,8 @@
   - ** (과적합된 에이전트로도 유의미한 결과를 낼수있는지 확인하기 위함) **
  <br/><br/>
   - ![image](https://user-images.githubusercontent.com/60399060/147758677-6f82ea74-4610-41e1-9294-dcd4c4c49e85.png)
-  -(Train data set 의 그래프)
-  -학습 데이터 셋의 시장 수익률 : 17.9672% 
+  - (Train data set 의 그래프)
+  - 학습 데이터 셋의 시장 수익률 : 17.9672% 
   
  <br/><br/>
   
@@ -167,7 +167,7 @@
   - ![image](https://user-images.githubusercontent.com/60399060/147762049-98bfbf1d-3c60-4905-aa9e-ea3ea876cbc8.png)
   - ![image](https://user-images.githubusercontent.com/60399060/147762175-bf62cc29-7bc2-4b06-947d-e11cd8811783.png)
   - 하락장 및 횡보구간(약40 ~ 60스탭) 에서 A2C 에이전트가 주로 선정되어 안정적인 트레이딩 전략을 채택했다.
-  - 상승장 (0~40스탭,60~65스탭 ) 에서 PPO 에이전트가 주로 선정되어 수익률을 극대화 하는 결과를 보였다.
+  - 상승장 (0 ~ 40스탭 , 60 ~ 65스탭 ) 에서 PPO 에이전트가 주로 선정되어 수익률을 극대화 하는 결과를 보였다.
 
               
 
