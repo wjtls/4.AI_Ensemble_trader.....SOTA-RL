@@ -1,6 +1,5 @@
 class PPO(nn.Module,Env):
-    
-    #https://github.com/nikhilbarhate99/PPO-PyTorch/blob/master/PPO.py 참고 코드 
+
     
     def __init__(self,window,                          #LSTM 윈도우 사이즈
                        cash,                            #초기 보유현금
@@ -131,59 +130,7 @@ class PPO(nn.Module,Env):
     
     
     def optimize(self,policy_net,value_net):
-        prob=policy_net(self.LSTM_input)
-        log_policy=F.log_softmax(prob)
-        value=value_net(self.LSTM_input) 
-        policy=F.softmax(prob)
-
-        total_reward=torch.tensor(self.reward_data,dtype=self.LSTM_input.dtype).to(self.LSTM_input.device) #텐서 새로만들면 항상 device설정해줘야함
-        total_step=self.step_data
-        total_next=self.next_step
-        
-        #Advantage_hat 계산(#PPO 논문 12번식) GAE
-        with torch.no_grad():
-            target= total_reward+self.gamma*value_net(self.LSTM_input)[total_next]
-            delta= target.detach()-value_net(self.LSTM_input)[total_step]
-            delta= torch.Tensor(delta.tolist()[::-1]).to(self.LSTM_input.device)  #델타를 역순으로 저장한다
-            
-            self.Advantage_hat=[]
-            for delta_ in delta:
-                self.Advantage=((self.gamma*self.lambda_))*self.Advantage+delta_
-                self.Advantage_hat.append(self.Advantage)
-
-        self.Advantage_hat.reverse()
-        self.Advantage_hat= torch.tensor(self.Advantage_hat,dtype=torch.float).view(-1).to(self.LSTM_input.device)
-
-        #에피소드때 구한 트레젝터리 가져온뒤 surr obj 및 ratio계산
-        old_log_prob=torch.tensor(self.old_prob,dtype=torch.float).to(self.LSTM_input.device)
-        old_log_prob=old_log_prob[total_step]
-        
-        old_action=torch.tensor(self.action_data).to(self.LSTM_input.device)
-        new_prob=log_policy[total_step] 
-        new_prob=new_prob.gather(1,old_action).view(-1)
-        
-        prob_ratio =torch.exp(new_prob-old_log_prob).view(-1)
-        surr1=prob_ratio *self.Advantage_hat
-        surr2=torch.clamp(prob_ratio,1-self.epsilon,1+self.epsilon)*torch.tensor(self.Advantage_hat).to(self.LSTM_input.device)
-        
-        #loss 계산
-        policy_loss= -torch.min(surr1,surr2).to(self.LSTM_input.device)
-        policy_loss= policy_loss.mean()
-        value_loss= F.mse_loss(value[total_step],target.detach())
-        self.total_loss= policy_loss+value_loss
-        
-        #업데이트
-        policy_net.optimizer.zero_grad()
-        value_net.optimizer.zero_grad()
-        
-        policy_loss.backward(retain_graph=True)
-        value_loss.backward()
-        
-        torch.nn.utils.clip_grad_norm_(policy_net.parameters(), 0.01)
-        torch.nn.utils.clip_grad_norm_(value_net.parameters(), 0.01)
-        
-        policy_net.optimizer.step()
-        value_net.optimizer.step()
+        '옵티마이즈 부분'
         
     
     def train(self,epoch):
